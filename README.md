@@ -20,21 +20,24 @@
 
 ## Introduction
 
-RSS Distiller is an AI-powered tech intelligence pipeline that fetches RSS articles, applies a **topic-aware dual evaluation** with DeepSeek (**Relevance Check + Quality Score**), and pushes only high-value bilingual summaries to Discord.
+RSS Distiller is an AI-powered tech intelligence pipeline that fetches RSS articles, applies a **topic-aware triple evaluation** with DeepSeek (**Relevance + Frontier Value + Attention**), and pushes only high-value bilingual summaries to Discord.
 
 Why it exists:
 - Developers subscribe to many sources but still miss signal in noise.
-- Generic summarizers rank quality but often ignore domain relevance.
-- RSS Distiller adds a **hard relevance filter**: if an article is off-topic for a channel, it gets `score=0` and is dropped.
+- Generic summarizers rank quality but often ignore domain relevance and actual market attention.
+- RSS Distiller adds strict hard filters: if an article is off-topic, not frontier enough, or lacks attention signal, it gets `score=0` and is dropped.
 
 ---
 
 ## Key Features
 
 - 🎯 **Topic Routing**: multi-channel routing via `CHANNELS_CONFIG`, each with independent RSS sources, Discord webhook, and domain `topic`.
-- 🧠 **Dual Evaluation**: DeepSeek first checks relevance to channel topic; low relevance is hard-filtered (`score=0`), then quality is scored.
+- 🧠 **Triple Evaluation**: DeepSeek scores `relevance_score`, `frontier_score`, and `attention_score`; low-signal content is hard-filtered.
 - 🌐 **Bilingual Output**: auto-generates EN/ZH title translation, key points, and impact analysis.
 - 🔁 **Deduplication**: Turso-backed link storage prevents duplicate pushes.
+- 📉 **Source Flood Control**: per-source candidate caps prevent a single feed from dominating the queue.
+- 🧪 **Stratified arXiv Sampling**: combines newest, keyword-strong mid-tail, and exploration samples to avoid missing high-value items beyond the top slice.
+- 🏁 **Top-K Push Selection**: candidates are ranked by composite AI signals and only top items are pushed each run.
 - ⚙️ **Zero-Cost Scheduling**: GitHub Actions runs daily (and supports manual dispatch).
 
 ---
@@ -46,8 +49,11 @@ RSS Sources
    -> 24h Time Filter (rss_parser.py)
    -> Link Dedup Check (db_manager.py / Turso)
    -> AI Evaluation (ai_processor.py)
-        1) Relevance Check (hard filter, score=0 if off-topic)
-        2) Quality Score (1-10)
+        1) Relevance Score (0-10)
+        2) Frontier Score (0-10)
+        3) Attention Score (0-10)
+        4) Hard thresholds -> score=0 if not qualified
+   -> Candidate Ranking (composite score)
    -> Discord Push (discord_pusher.py)
    -> Insert Link to DB (on successful push)
 ```
