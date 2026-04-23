@@ -14,6 +14,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 
 import feedparser
+import requests
+import urllib3
+
+# 禁用 requests 的 SSL 验证警告，保持日志整洁
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def _strip_html(html_str: str) -> str:
@@ -48,8 +53,20 @@ def fetch_and_filter_rss(rss_urls: List[str]) -> List[Dict[str, Any]]:
     for url in rss_urls:
         print(f"[RSS] 正在解析: {url}")
         try:
-            # feedparser.parse 会自动处理很多网络和格式异常
-            feed = feedparser.parse(url)
+            # 伪装请求头，模拟真实浏览器
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+            
+            # 使用 requests 先抓取原始数据，忽略 SSL 验证，增加超时控制
+            response = requests.get(url, headers=headers, verify=False, timeout=15)
+            
+            if response.status_code != 200:
+                print(f"  -> [请求失败] HTTP 状态码: {response.status_code}")
+                continue
+                
+            # 将获取到的原始内存数据交给 feedparser 解析
+            feed = feedparser.parse(response.content)
             
             if feed.bozo and hasattr(feed, "bozo_exception"):
                 print(f"  -> [警告] 源解析异常 (可能不规范): {feed.bozo_exception}")

@@ -25,14 +25,16 @@ client = OpenAI(
     base_url="https://api.deepseek.com"
 )
 
-# 需求文档中规定的系统提示词
+# 需求文档中规定的系统提示词 (双语升级版)
 SYSTEM_PROMPT = (
-    "你是一个资深的前沿技术专家。请根据提供的新闻标题和摘要，评估其对技术开发者的价值，"
-    "给出 1-10 的整数评分。你必须严格输出 JSON 格式，包含以下字段：\n"
-    "- 'score' (整数)\n"
-    "- 'core_breakthrough' (一句话核心突破)\n"
-    "- 'bullet_points' (包含3个核心要点的列表)\n"
-    "- 'impact_analysis' (技术难点或行业影响分析)"
+    "You are a senior technology expert and a professional bilingual translator. "
+    "Evaluate the provided tech news title and summary for its value to developers on a scale of 1 to 10. "
+    "You MUST output strictly in JSON format containing exactly the following fields:\n"
+    "- 'score': (Integer, 1-10)\n"
+    "- 'translated_title': (The Chinese translation of the original title)\n"
+    "- 'core_breakthrough': (One-sentence core breakthrough in format: '[English text] / [中文翻译]')\n"
+    "- 'bullet_points': (A list of exactly 3 key points. Each point MUST be in format: '[English text] / [中文翻译]')\n"
+    "- 'impact_analysis': (Technical or industry impact analysis in format: '[English text] / [中文翻译]')"
 )
 
 
