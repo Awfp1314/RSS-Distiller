@@ -89,6 +89,22 @@ DISCORD_WEBHOOK_UE=https://discord.com/api/webhooks/...
 python main.py
 ```
 
+## GitHub Actions 部署
+
+工作流文件：
+- `.github/workflows/daily_push.yml`（每日资讯抓取与推送）
+- `.github/workflows/changelog_notify.yml`（推送提交更新到 Discord `#changelog`）
+
+需要在仓库 `Settings -> Secrets and variables -> Actions` 中配置：
+- `DEEPSEEK_API_KEY`
+- `TURSO_DATABASE_URL`
+- `TURSO_AUTH_TOKEN`
+- `DISCORD_WEBHOOK_AI`
+- `DISCORD_WEBHOOK_UE`
+- `DISCORD_WEBHOOK_CHANGELOG`
+
+`changelog_notify.yml` 会监听 `main` 分支的 `push` 事件，并自动发送提交摘要（作者、提交数量、短 SHA + 提交标题、compare 链接、工作流运行链接）到更新记录频道。
+
 ---
 
 ## 参与贡献

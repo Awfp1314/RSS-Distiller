@@ -108,7 +108,9 @@ python discord_pusher.py
 
 ## GitHub Actions Deployment
 
-Workflow file: `.github/workflows/daily_push.yml`
+Workflow files:
+- `.github/workflows/daily_push.yml` (daily RSS distillation)
+- `.github/workflows/changelog_notify.yml` (post commit updates to Discord `#changelog`)
 
 - Scheduled run: daily at `00:00 UTC` (08:00 Beijing Time)
 - Manual run: `workflow_dispatch`
@@ -118,6 +120,9 @@ Workflow file: `.github/workflows/daily_push.yml`
   - `TURSO_AUTH_TOKEN`
   - `DISCORD_WEBHOOK_AI`
   - `DISCORD_WEBHOOK_UE`
+  - `DISCORD_WEBHOOK_CHANGELOG`
+
+`changelog_notify.yml` listens to `push` on `main` and posts a commit summary (author, commit count, short SHA + title, compare link, workflow link) to your Discord changelog channel.
 
 ---
 
