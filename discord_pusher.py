@@ -53,8 +53,8 @@ def push_to_discord(article_data: Dict[str, Any], ai_result: Dict[str, Any]) -> 
         f"• {bullet_points[2]}\n\n"
         f"💡 **技术深度分析**：\n"
         f"{impact_analysis}\n\n"
-        f"🔗 **原文链接**：{link}\n\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        f"🔗 **原文链接**：<{link}>\n\n"
+        f"━━━━━━━━━━━━━━━"
     )
 
     payload = {
