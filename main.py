@@ -34,6 +34,7 @@ CHANNELS_CONFIG = {
         "topic": "Artificial Intelligence, Machine Learning, Large Language Models (LLMs), AI Industry News",
         "max_items_per_source": 30,
         "max_push_per_run": 8,
+        "min_scores": {"relevance": 7, "frontier": 8, "attention": 7, "final": 8},
     },
     "虚幻引擎开发": {
         "rss_urls": [
@@ -46,19 +47,21 @@ CHANNELS_CONFIG = {
         "topic": "Unreal Engine, 3D Rendering, Game Development, Tech Art, Epic Games",
         "max_items_per_source": 20,
         "max_push_per_run": 6,
+        "min_scores": {"relevance": 7, "frontier": 8, "attention": 7, "final": 8},
     },
     "法律前沿资讯": {
         "rss_urls": [
             "https://www.scotusblog.com/feed/",                                # SCOTUSblog（美国最高法院相关）
-            "https://www.justsecurity.org/feed/",                              # Just Security（国家安全与法律政策）
+            "https://www.govinfo.gov/rss/bills.xml",                           # GovInfo 国会法案动态（高频）
             "https://www.sec.gov/news/pressreleases.rss",                      # SEC 官方执法/监管动态
             "https://www.judiciary.uk/feed/",                                  # UK Judiciary（英国司法系统动态）
             "https://www.eff.org/rss/updates.xml",                             # EFF（数字权利与科技法律）
         ],
         "webhook_env": "DISCORD_WEBHOOK_LEGAL",
-        "topic": "Law, Legal Policy, Courts, Regulation, Compliance, Privacy Law, AI Law",
+        "topic": "Law, Legal Policy, Court Rulings, Regulation, Compliance, Privacy Law, AI Law, Major Legislation",
         "max_items_per_source": 20,
         "max_push_per_run": 6,
+        "min_scores": {"relevance": 7, "frontier": 6, "attention": 6, "final": 7},
     }
 }
 
@@ -92,6 +95,11 @@ def main():
         topic = config["topic"]
         max_items_per_source = config.get("max_items_per_source", 30)
         max_push_per_run = config.get("max_push_per_run", 8)
+        min_scores = config.get("min_scores", {})
+        relevance_min = int(min_scores.get("relevance", 7))
+        frontier_min = int(min_scores.get("frontier", 8))
+        attention_min = int(min_scores.get("attention", 7))
+        score_min = int(min_scores.get("final", 8))
 
         # 2. 模块 1：抓取并过滤当前频道 24 小时内的文章
         print(f"\n[{channel_name} - 步骤 1] 抓取并执行 24 小时过滤...")
@@ -128,7 +136,11 @@ def main():
                 summary,
                 topic=topic,
                 source_name=article.get("source_name", ""),
-                source_url=article.get("source_url", "")
+                source_url=article.get("source_url", ""),
+                relevance_min=relevance_min,
+                frontier_min=frontier_min,
+                attention_min=attention_min,
+                score_min=score_min,
             )
 
             if not ai_result:

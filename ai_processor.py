@@ -39,7 +39,7 @@ SYSTEM_PROMPT_TEMPLATE = (
     "1. Relevance Score (0-10): topic alignment with Target Topic.\n"
     "2. Frontier Score (0-10): novelty, technical depth, and practical signal for professionals.\n"
     "3. Attention Score (0-10): market/industry attention level based on indicators in the provided content such as official announcement significance, broad developer impact, citation momentum, or ecosystem adoption signal. If evidence is weak, give low score.\n"
-    "4. Final Score (0-10 integer): if relevance_score < 7 or frontier_score < 8 or attention_score < 7, score MUST be 0. Otherwise score reflects overall quality.\n\n"
+    "4. Final Score (0-10 integer): if relevance_score < {relevance_min} or frontier_score < {frontier_min} or attention_score < {attention_min}, score MUST be 0. Otherwise score reflects overall quality.\n\n"
     "### Source Reliability Hint:\n"
     "- Prefer official releases, primary technical writeups, or first-party research sources.\n"
     "- For community sources, be stricter: without concrete technical breakthroughs, score 0.\n\n"
@@ -82,6 +82,10 @@ def evaluate_article(
     topic: str = "general technology",
     source_name: str = "",
     source_url: str = "",
+    relevance_min: int = 7,
+    frontier_min: int = 8,
+    attention_min: int = 7,
+    score_min: int = 8,
 ) -> Optional[Dict[str, Any]]:
     """
     使用 DeepSeek API 评估文章价值，并提取结构化摘要。
@@ -112,7 +116,19 @@ def evaluate_article(
     )
     
     # 动态注入 topic
-    system_prompt = SYSTEM_PROMPT_TEMPLATE.format(topic=topic)
+    system_prompt = SYSTEM_PROMPT_TEMPLATE.format(
+        topic=topic,
+        relevance_min=relevance_min,
+        frontier_min=frontier_min,
+        attention_min=attention_min,
+    )
+
+    def _parse_json_with_fallback(raw: str) -> Dict[str, Any]:
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            repaired = re.sub(r",\s*([}\]])", r"\1", raw)
+            return json.loads(repaired)
 
     try:
         # DeepSeek 官方建议指定 response_format={"type": "json_object"} 强制输出 JSON
@@ -133,7 +149,7 @@ def evaluate_article(
             return None
 
         # 解析 JSON
-        result = json.loads(raw_content)
+        result = _parse_json_with_fallback(raw_content)
         
         # 提取评分进行判断
         score = int(result.get("score", 0) or 0)
@@ -141,14 +157,14 @@ def evaluate_article(
         frontier_score = int(result.get("frontier_score", 0) or 0)
         attention_score = int(result.get("attention_score", 0) or 0)
 
-        if relevance_score < 7 or frontier_score < 8 or attention_score < 7:
+        if relevance_score < relevance_min or frontier_score < frontier_min or attention_score < attention_min:
             print(
                 "  -> [过滤] 相关性/前沿性/关注度不足已过滤 "
                 f"(relevance={relevance_score}, frontier={frontier_score}, attention={attention_score}): {title}"
             )
             return None
 
-        if score < 8:
+        if score < score_min:
             print(f"  -> [过滤] 评分不足已过滤 (得分: {score}/10): {title}")
             return None
             
