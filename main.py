@@ -46,6 +46,19 @@ CHANNELS_CONFIG = {
         "topic": "Unreal Engine, 3D Rendering, Game Development, Tech Art, Epic Games",
         "max_items_per_source": 20,
         "max_push_per_run": 6,
+    },
+    "法律前沿资讯": {
+        "rss_urls": [
+            "https://www.scotusblog.com/feed/",                                # SCOTUSblog（美国最高法院相关）
+            "https://www.justsecurity.org/feed/",                              # Just Security（国家安全与法律政策）
+            "https://www.sec.gov/news/pressreleases.rss",                      # SEC 官方执法/监管动态
+            "https://www.judiciary.uk/feed/",                                  # UK Judiciary（英国司法系统动态）
+            "https://www.eff.org/rss/updates.xml",                             # EFF（数字权利与科技法律）
+        ],
+        "webhook_env": "DISCORD_WEBHOOK_LEGAL",
+        "topic": "Law, Legal Policy, Courts, Regulation, Compliance, Privacy Law, AI Law",
+        "max_items_per_source": 20,
+        "max_push_per_run": 6,
     }
 }
 

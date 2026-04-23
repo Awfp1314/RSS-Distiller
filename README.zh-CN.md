@@ -90,6 +90,7 @@ TURSO_AUTH_TOKEN=your-turso-token
 
 DISCORD_WEBHOOK_AI=https://discord.com/api/webhooks/...
 DISCORD_WEBHOOK_UE=https://discord.com/api/webhooks/...
+DISCORD_WEBHOOK_LEGAL=https://discord.com/api/webhooks/...
 ```
 
 ### 3) 运行
@@ -112,6 +113,7 @@ python main.py
 - `TURSO_AUTH_TOKEN`
 - `DISCORD_WEBHOOK_AI`
 - `DISCORD_WEBHOOK_UE`
+- `DISCORD_WEBHOOK_LEGAL`
 - `DISCORD_WEBHOOK_CHANGELOG`
 
 `changelog_notify.yml` 会监听 `main` 分支的 `push` 事件，并自动发送提交摘要（作者、提交数量、短 SHA + 提交标题、compare 链接、工作流运行链接）到更新记录频道。

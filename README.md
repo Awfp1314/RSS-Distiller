@@ -93,6 +93,7 @@ TURSO_AUTH_TOKEN=your-turso-token
 
 DISCORD_WEBHOOK_AI=https://discord.com/api/webhooks/...
 DISCORD_WEBHOOK_UE=https://discord.com/api/webhooks/...
+DISCORD_WEBHOOK_LEGAL=https://discord.com/api/webhooks/...
 ```
 
 ### 3) Run
@@ -127,6 +128,7 @@ Workflow files:
   - `TURSO_AUTH_TOKEN`
   - `DISCORD_WEBHOOK_AI`
   - `DISCORD_WEBHOOK_UE`
+  - `DISCORD_WEBHOOK_LEGAL`
   - `DISCORD_WEBHOOK_CHANGELOG`
 
 `changelog_notify.yml` listens to `push` on `main` and posts a commit summary (author, commit count, short SHA + title, compare link, workflow link) to your Discord changelog channel.
