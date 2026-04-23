@@ -104,6 +104,8 @@ python main.py
 - `.github/workflows/daily_push.yml`（每日资讯抓取与推送）
 - `.github/workflows/changelog_notify.yml`（推送提交更新到 Discord `#changelog`）
 
+- 定时触发时区说明：当前 cron 使用 `UTC`，工作流触发后会立即通过 Webhook 推送；不会按每位用户本地时区统一在早上 8 点送达。
+
 需要在仓库 `Settings -> Secrets and variables -> Actions` 中配置：
 - `DEEPSEEK_API_KEY`
 - `TURSO_DATABASE_URL`

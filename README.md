@@ -120,6 +120,7 @@ Workflow files:
 
 - Scheduled run: daily at `00:00 UTC` (08:00 Beijing Time)
 - Manual run: `workflow_dispatch`
+- Timezone behavior: schedule is fixed in `UTC`; Discord posts are sent immediately when the workflow runs (not per-user local 08:00 delivery)
 - Required repository secrets:
   - `DEEPSEEK_API_KEY`
   - `TURSO_DATABASE_URL`
