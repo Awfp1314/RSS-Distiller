@@ -3,7 +3,7 @@ main.py - 自动化资讯推送器主入口
 
 功能：
 - 采用字典路由模式支持多频道推送
-- 串联四大模块，实现“RSS 获取 -> 数据库防重 -> AI 打分过滤 -> 动态 Discord 推送 -> 数据库更新”的完整业务闭环。
+- 串联四大模块，实现"RSS 获取 -> 数据库防重 -> AI 打分过滤 -> 动态 Discord 推送 -> 数据库更新"的完整业务闭环。
 """
 
 import os
@@ -24,13 +24,14 @@ load_dotenv()
 CHANNELS_CONFIG = {
     "AI前沿资讯": {
         "rss_urls": [
-            "https://news.ycombinator.com/rss",                                # Hacker News (基础源)
+            "https://news.ycombinator.com/rss",                                # Hacker News (基础)
             "https://huggingface.co/blog/feed.xml",                            # Hugging Face 官方博客与动态
             "https://openai.com/news.xml",                                     # OpenAI 官方资讯
             "https://techcrunch.com/category/artificial-intelligence/feed/",   # TechCrunch (AI 前沿动态)
             "https://www.technologyreview.com/topic/artificial-intelligence/feed/", # MIT Technology Review (AI 分类)
         ],
-        "webhook_env": "DISCORD_WEBHOOK_AI"
+        "webhook_env": "DISCORD_WEBHOOK_AI",
+        "topic": "Artificial Intelligence, Machine Learning, Large Language Models (LLMs), AI Industry News"
     },
     "虚幻引擎开发": {
         "rss_urls": [
@@ -39,14 +40,15 @@ CHANNELS_CONFIG = {
             "https://www.reddit.com/r/unrealengine/.rss",                      # Reddit UE 社区动态
             "https://rsshub.app/epicgames/marketplace/new",                    # UE Marketplace 新品 (因官方无 RSS，使用开源 RSSHub 服务桥接)
         ],
-        "webhook_env": "DISCORD_WEBHOOK_UE"
+        "webhook_env": "DISCORD_WEBHOOK_UE",
+        "topic": "Unreal Engine, 3D Rendering, Game Development, Tech Art, Epic Games"
     }
 }
 
 
 def main():
     print("=" * 50)
-    print("🚀 AI 自动化前沿资讯推送器 - 支持多频道路由版")
+    print("AI 自动化前沿资讯推送器 - 支持多频道路由版")
     print("=" * 50)
 
     # 1. 初始化数据库表（如果不存在）
@@ -58,7 +60,7 @@ def main():
     # 外层路由循环：遍历每一个领域/频道
     for channel_name, config in CHANNELS_CONFIG.items():
         print("\n" + "#" * 50)
-        print(f"📡 正在处理频道: 【{channel_name}】")
+        print(f"正在处理频道: 【{channel_name}】")
         print("#" * 50)
 
         # 提取当前频道的 Webhook
@@ -70,6 +72,7 @@ def main():
             continue
 
         rss_urls = config["rss_urls"]
+        topic = config["topic"]
 
         # 2. 模块 1：抓取并过滤当前频道 24 小时内的文章
         print(f"\n[{channel_name} - 步骤 1] 抓取并执行 24 小时过滤...")
@@ -98,11 +101,11 @@ def main():
             total_stats_new += 1
             print("  -> [新文章] 调用 DeepSeek AI 进行价值评估...")
 
-            # 4. 模块 3：AI 打分与深度提炼
-            ai_result = evaluate_article(title, summary)
+            # 4. 模块 3：AI 打分与深度提炼（传入频道 topic 进行相关性硬过滤）
+            ai_result = evaluate_article(title, summary, topic=topic)
 
             if not ai_result:
-                # 评分低于 7 分，或解析异常，已被 ai_processor 内部过滤
+                # 相关性过低（score=0）或评分 < 7，已被 ai_processor 内部过滤
                 continue
 
             # 5. 模块 4：动态推送到对应频道的 Discord
@@ -119,7 +122,7 @@ def main():
 
     # 7. 全局任务总结
     print("\n" + "=" * 50)
-    print("✅ 所有频道任务处理完毕！本次全局工作流统计：")
+    print("所有频道任务处理完毕！本次全局工作流统计：")
     print(f"- 参与路由的频道数: {len(CHANNELS_CONFIG)}")
     print(f"- 数据库查重新文章总计: {total_stats_new}")
     print(f"- 成功推送到 Discord 文章总计: {total_stats_pushed}")
