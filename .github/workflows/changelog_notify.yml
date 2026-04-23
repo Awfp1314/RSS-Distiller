@@ -22,11 +22,15 @@ jobs:
           python - <<'PY'
           import json
           import os
+          import urllib.error
           import urllib.request
 
           webhook = os.environ.get("DISCORD_WEBHOOK_CHANGELOG", "").strip()
           if not webhook:
               print("[skip] DISCORD_WEBHOOK_CHANGELOG is not configured.")
+              raise SystemExit(0)
+          if not webhook.startswith("https://discord.com/api/webhooks/"):
+              print("[skip] DISCORD_WEBHOOK_CHANGELOG is not a valid Discord webhook URL.")
               raise SystemExit(0)
 
           event_path = os.environ["GITHUB_EVENT_PATH"]
@@ -84,9 +88,28 @@ jobs:
           req = urllib.request.Request(
               webhook,
               data=payload,
-              headers={"Content-Type": "application/json"},
+              headers={
+                  "Content-Type": "application/json",
+                  "User-Agent": "rss-distiller-changelog-bot/1.0",
+              },
               method="POST",
           )
-          with urllib.request.urlopen(req, timeout=15) as resp:
-              print(f"Discord webhook response: {resp.status}")
+          try:
+              with urllib.request.urlopen(req, timeout=15) as resp:
+                  print(f"Discord webhook response: {resp.status}")
+          except urllib.error.HTTPError as e:
+              error_body = ""
+              try:
+                  error_body = e.read().decode("utf-8", errors="ignore")
+              except Exception:
+                  error_body = "(failed to decode error body)"
+
+              print(f"[warn] Discord webhook request failed: HTTP {e.code}")
+              print(f"[warn] Response body: {error_body}")
+
+              if e.code == 403:
+                  print("[warn] 403 usually means the webhook URL is invalid, revoked, or lacks permission.")
+                  print("[warn] Please regenerate the webhook in #changelog and update the DISCORD_WEBHOOK_CHANGELOG secret.")
+
+              raise SystemExit(0)
           PY
