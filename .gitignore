@@ -1,0 +1,14 @@
+# 环境变量
+.env
+
+# 文档
+AI 自动化前沿资讯推送器项目需求文档.md
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
