@@ -24,24 +24,28 @@ load_dotenv()
 CHANNELS_CONFIG = {
     "AI前沿资讯": {
         "rss_urls": [
-            "https://news.ycombinator.com/rss",                                # Hacker News (基础)
+            "https://openai.com/blog/rss.xml",                                 # OpenAI 官方博客 RSS（稳定可抓取）
             "https://huggingface.co/blog/feed.xml",                            # Hugging Face 官方博客与动态
-            "https://openai.com/news.xml",                                     # OpenAI 官方资讯
-            "https://techcrunch.com/category/artificial-intelligence/feed/",   # TechCrunch (AI 前沿动态)
             "https://www.technologyreview.com/topic/artificial-intelligence/feed/", # MIT Technology Review (AI 分类)
+            "https://venturebeat.com/category/ai/feed/",                       # VentureBeat AI 行业动态
+            "https://export.arxiv.org/rss/cs.AI",                              # arXiv cs.AI 研究前沿
         ],
         "webhook_env": "DISCORD_WEBHOOK_AI",
-        "topic": "Artificial Intelligence, Machine Learning, Large Language Models (LLMs), AI Industry News"
+        "topic": "Artificial Intelligence, Machine Learning, Large Language Models (LLMs), AI Industry News",
+        "max_items_per_source": 30,
+        "max_push_per_run": 8,
     },
     "虚幻引擎开发": {
         "rss_urls": [
             "https://www.unrealengine.com/en-US/rss",                          # Unreal Engine 官方 RSS
             "https://80.lv/category/unreal-engine/feed/",                      # 80 Level (UE 技术美术与开发)
-            "https://www.reddit.com/r/unrealengine/.rss",                      # Reddit UE 社区动态
-            "https://rsshub.app/epicgames/marketplace/new",                    # UE Marketplace 新品 (因官方无 RSS，使用开源 RSSHub 服务桥接)
+            "https://www.cgchannel.com/tag/unreal-engine/feed/",               # CG Channel UE 行业与技术动态
+            "https://www.unrealengine.com/en-US/spotlights/rss",               # Unreal Engine 官方案例与技术实践
         ],
         "webhook_env": "DISCORD_WEBHOOK_UE",
-        "topic": "Unreal Engine, 3D Rendering, Game Development, Tech Art, Epic Games"
+        "topic": "Unreal Engine, 3D Rendering, Game Development, Tech Art, Epic Games",
+        "max_items_per_source": 20,
+        "max_push_per_run": 6,
     }
 }
 
@@ -73,10 +77,12 @@ def main():
 
         rss_urls = config["rss_urls"]
         topic = config["topic"]
+        max_items_per_source = config.get("max_items_per_source", 30)
+        max_push_per_run = config.get("max_push_per_run", 8)
 
         # 2. 模块 1：抓取并过滤当前频道 24 小时内的文章
         print(f"\n[{channel_name} - 步骤 1] 抓取并执行 24 小时过滤...")
-        recent_articles = fetch_and_filter_rss(rss_urls)
+        recent_articles = fetch_and_filter_rss(rss_urls, max_items_per_source=max_items_per_source)
         print(f"-> 共抓取到 {len(recent_articles)} 篇 24 小时内发布的文章。")
 
         if not recent_articles:
@@ -84,6 +90,8 @@ def main():
             continue
 
         print(f"\n[{channel_name} - 步骤 2 & 3 & 4] 开始处理文章队列...")
+
+        channel_candidates = []
 
         for idx, article in enumerate(recent_articles, 1):
             title = article["title"]
@@ -102,11 +110,44 @@ def main():
             print("  -> [新文章] 调用 DeepSeek AI 进行价值评估...")
 
             # 4. 模块 3：AI 打分与深度提炼（传入频道 topic 进行相关性硬过滤）
-            ai_result = evaluate_article(title, summary, topic=topic)
+            ai_result = evaluate_article(
+                title,
+                summary,
+                topic=topic,
+                source_name=article.get("source_name", ""),
+                source_url=article.get("source_url", "")
+            )
 
             if not ai_result:
-                # 相关性过低（score=0）或评分 < 7，已被 ai_processor 内部过滤
+                # 已被 ai_processor 内部过滤（相关性/前沿性/关注度不达标）
                 continue
+
+            channel_candidates.append((article, ai_result))
+
+        if not channel_candidates:
+            print(f"\n[{channel_name}] 无通过“前沿+关注度”双重过滤的候选文章。")
+            continue
+
+        channel_candidates.sort(
+            key=lambda item: (
+                int(item[1].get("score", 0) or 0)
+                + int(item[1].get("frontier_score", 0) or 0)
+                + int(item[1].get("attention_score", 0) or 0),
+                int(item[1].get("attention_score", 0) or 0),
+                int(item[1].get("frontier_score", 0) or 0),
+            ),
+            reverse=True,
+        )
+
+        selected_candidates = channel_candidates[:max_push_per_run]
+        print(
+            f"\n[{channel_name}] 通过过滤 {len(channel_candidates)} 篇，"
+            f"按综合分选取前 {len(selected_candidates)} 篇进行推送。"
+        )
+
+        for article, ai_result in selected_candidates:
+            title = article["title"]
+            link = article["link"]
 
             # 5. 模块 4：动态推送到对应频道的 Discord
             print(f"  -> [高分通过] 正在推送到 【{channel_name}】 频道...")

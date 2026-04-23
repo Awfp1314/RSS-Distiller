@@ -4,11 +4,12 @@ ai_processor.py - AI 打分与深度提炼模块
 功能：
 - 调用 DeepSeek 官方 API 进行新闻价值评估
 - 强制模型输出预定义的 JSON 格式
-- 根据评分（阈值 >= 7）进行拦截与过滤
+- 根据相关性/前沿性/关注度与总分阈值进行拦截与过滤
 """
 
 import json
 import os
+import re
 from typing import Any, Dict, Optional
 
 from dotenv import load_dotenv
@@ -28,15 +29,26 @@ client = OpenAI(
 # 需求文档中规定的系统提示词 (双语升级版 - 引入领域相关性硬过滤)
 SYSTEM_PROMPT_TEMPLATE = (
     "You are a senior technology expert and a professional bilingual translator. "
-    "Your task is to evaluate a tech news article based on its Relevance to a specific Target Topic, and its overall Quality.\n\n"
+    "Your task is to evaluate a tech article based on its Relevance to a specific Target Topic and its Frontier Value for engineering audiences.\n\n"
     "Target Topic: {topic}\n\n"
+    "### Hard Rejection Rules (must score 0):\n"
+    "- Q&A/help-seeking posts, beginner troubleshooting, recruitment, personal showcase, opinion/rant, unverified rumors, repost/roundup with no concrete technical updates.\n"
+    "- Community discussion threads with no new release, no benchmark, no official technical detail, and no reproducible engineering value.\n"
+    "- Content mainly about personal workflow or generic career advice.\n\n"
     "### Evaluation Mechanism (Dual Scoring):\n"
-    "1. Relevance Check (Hard Filter): Does this article discuss or heavily relate to the Target Topic? "
-    "If the article is totally unrelated or relevance is low, you MUST immediately assign a score of 0.\n"
-    "2. Quality Assessment: If the article is highly relevant to the Target Topic, evaluate its technical value and depth for developers on a scale of 1 to 10.\n\n"
+    "1. Relevance Score (0-10): topic alignment with Target Topic.\n"
+    "2. Frontier Score (0-10): novelty, technical depth, and practical signal for professionals.\n"
+    "3. Attention Score (0-10): market/industry attention level based on indicators in the provided content such as official announcement significance, broad developer impact, citation momentum, or ecosystem adoption signal. If evidence is weak, give low score.\n"
+    "4. Final Score (0-10 integer): if relevance_score < 7 or frontier_score < 8 or attention_score < 7, score MUST be 0. Otherwise score reflects overall quality.\n\n"
+    "### Source Reliability Hint:\n"
+    "- Prefer official releases, primary technical writeups, or first-party research sources.\n"
+    "- For community sources, be stricter: without concrete technical breakthroughs, score 0.\n\n"
     "### Output format:\n"
     "You MUST output strictly in JSON format containing exactly the following fields:\n"
     "- 'score': (Integer, 0-10. Return 0 if relevance to the target topic is low. Otherwise, 1-10 based on quality)\n"
+    "- 'relevance_score': (Integer, 0-10)\n"
+    "- 'frontier_score': (Integer, 0-10)\n"
+    "- 'attention_score': (Integer, 0-10)\n"
     "- 'translated_title': (The Chinese translation of the original title)\n"
     "- 'core_breakthrough': (One-sentence core breakthrough in format: '[English text] / [中文翻译]')\n"
     "- 'bullet_points': (A list of exactly 3 key points. Each point MUST be in format: '[English text] / [中文翻译]')\n"
@@ -44,7 +56,33 @@ SYSTEM_PROMPT_TEMPLATE = (
 )
 
 
-def evaluate_article(title: str, summary: str, topic: str = "general technology") -> Optional[Dict[str, Any]]:
+def _looks_like_low_signal_discussion(title: str, source_url: str) -> bool:
+    """对社区问答/求助类标题做轻量硬过滤，避免明显噪声进入模型。"""
+    if "reddit.com" not in (source_url or ""):
+        return False
+
+    title_l = (title or "").strip().lower()
+    patterns = [
+        r"\?$",
+        r"^\[?help\]?",
+        r"^\[?question\]?",
+        r"\bhow do i\b",
+        r"\banyone else\b",
+        r"\bcan someone\b",
+        r"\bwhy is my\b",
+        r"\bissue\b",
+        r"\bproblem\b",
+    ]
+    return any(re.search(p, title_l) for p in patterns)
+
+
+def evaluate_article(
+    title: str,
+    summary: str,
+    topic: str = "general technology",
+    source_name: str = "",
+    source_url: str = "",
+) -> Optional[Dict[str, Any]]:
     """
     使用 DeepSeek API 评估文章价值，并提取结构化摘要。
 
@@ -54,15 +92,24 @@ def evaluate_article(title: str, summary: str, topic: str = "general technology"
         topic: 频道关注的技术领域，用于相关性硬过滤
 
     返回:
-        如果评分 >= 7 且 JSON 解析成功，返回包含分析结果的字典；
-        如果评分 < 7，或者解析/请求失败，返回 None。
+        如果通过相关性/前沿性/关注度与总分阈值且 JSON 解析成功，返回包含分析结果的字典；
+        如果未通过阈值，或者解析/请求失败，返回 None。
     """
     if not API_KEY:
         print("[错误] 未找到 DEEPSEEK_API_KEY 环境变量！")
         return None
 
+    if _looks_like_low_signal_discussion(title, source_url):
+        print(f"  -> [过滤] 社区问答/求助类标题已拦截: {title}")
+        return None
+
     # 构建用户输入，避免摘要太长消耗过多 Token（截断前 1500 个字符）
-    user_content = f"标题: {title}\n\n摘要: {summary[:1500]}"
+    user_content = (
+        f"Source Name: {source_name or 'Unknown'}\n"
+        f"Source URL: {source_url or 'Unknown'}\n"
+        f"Title: {title}\n\n"
+        f"Summary: {summary[:1500]}"
+    )
     
     # 动态注入 topic
     system_prompt = SYSTEM_PROMPT_TEMPLATE.format(topic=topic)
@@ -89,9 +136,19 @@ def evaluate_article(title: str, summary: str, topic: str = "general technology"
         result = json.loads(raw_content)
         
         # 提取评分进行判断
-        score = result.get("score", 0)
-        
-        if score < 7:
+        score = int(result.get("score", 0) or 0)
+        relevance_score = int(result.get("relevance_score", 0) or 0)
+        frontier_score = int(result.get("frontier_score", 0) or 0)
+        attention_score = int(result.get("attention_score", 0) or 0)
+
+        if relevance_score < 7 or frontier_score < 8 or attention_score < 7:
+            print(
+                "  -> [过滤] 相关性/前沿性/关注度不足已过滤 "
+                f"(relevance={relevance_score}, frontier={frontier_score}, attention={attention_score}): {title}"
+            )
+            return None
+
+        if score < 8:
             print(f"  -> [过滤] 评分不足已过滤 (得分: {score}/10): {title}")
             return None
             

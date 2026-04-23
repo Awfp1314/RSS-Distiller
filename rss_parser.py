@@ -34,7 +34,103 @@ def _strip_html(html_str: str) -> str:
     return " ".join(text.split())
 
 
-def fetch_and_filter_rss(rss_urls: List[str]) -> List[Dict[str, Any]]:
+def _is_arxiv_source(source_url: str) -> bool:
+    return "arxiv.org/rss/" in (source_url or "")
+
+
+def _keyword_signal_score(title: str, summary: str) -> int:
+    text = f"{title} {summary}".lower()
+    keyword_weights = {
+        "state-of-the-art": 4,
+        "sota": 3,
+        "benchmark": 3,
+        "code": 2,
+        "github": 2,
+        "dataset": 2,
+        "leaderboard": 2,
+        "evaluation": 1,
+        "inference": 2,
+        "efficiency": 2,
+        "reasoning": 2,
+        "multimodal": 2,
+        "agent": 1,
+        "rl": 1,
+        "distillation": 2,
+    }
+    score = 0
+    for key, weight in keyword_weights.items():
+        if key in text:
+            score += weight
+    return score
+
+
+def _select_articles_for_source(
+    source_articles: List[Dict[str, Any]],
+    source_url: str,
+    max_items_per_source: int,
+) -> List[Dict[str, Any]]:
+    """
+    通用源默认按最新截断；arXiv 使用分层采样，兼顾“最新”与“潜在高价值尾部”。
+    """
+    if max_items_per_source <= 0:
+        return source_articles
+
+    if not _is_arxiv_source(source_url):
+        return source_articles[:max_items_per_source]
+
+    if len(source_articles) <= max_items_per_source:
+        return source_articles
+
+    fresh_quota = max(10, int(max_items_per_source * 0.5))
+    quality_quota = max(8, int(max_items_per_source * 0.35))
+    explore_quota = max_items_per_source - fresh_quota - quality_quota
+    if explore_quota < 0:
+        explore_quota = 0
+
+    selected: List[Dict[str, Any]] = []
+    selected_links = set()
+
+    def _append_unique(items: List[Dict[str, Any]]) -> None:
+        for item in items:
+            link = item.get("link", "")
+            if link and link in selected_links:
+                continue
+            selected.append(item)
+            if link:
+                selected_links.add(link)
+            if len(selected) >= max_items_per_source:
+                return
+
+    # 1) 新鲜层：优先保证最新内容
+    _append_unique(source_articles[:fresh_quota])
+    if len(selected) >= max_items_per_source:
+        return selected[:max_items_per_source]
+
+    # 2) 质量层：从中后段按关键词信号提分，补足可能的高质量尾部
+    mid_tail = source_articles[fresh_quota:]
+    scored_mid_tail = sorted(
+        mid_tail,
+        key=lambda item: _keyword_signal_score(item.get("title", ""), item.get("summary", "")),
+        reverse=True,
+    )
+    _append_unique(scored_mid_tail[:quality_quota])
+    if len(selected) >= max_items_per_source:
+        return selected[:max_items_per_source]
+
+    # 3) 探索层：从剩余内容按步长抽样，避免长期固定盲区
+    remaining = [
+        item for item in source_articles
+        if not item.get("link") or item.get("link") not in selected_links
+    ]
+    if remaining and explore_quota > 0:
+        step = max(1, len(remaining) // explore_quota)
+        exploratory = remaining[::step][:explore_quota]
+        _append_unique(exploratory)
+
+    return selected[:max_items_per_source]
+
+
+def fetch_and_filter_rss(rss_urls: List[str], max_items_per_source: int = 30) -> List[Dict[str, Any]]:
     """
     抓取指定的 RSS 源，并过滤出 24 小时内的文章。
 
@@ -52,6 +148,7 @@ def fetch_and_filter_rss(rss_urls: List[str]) -> List[Dict[str, Any]]:
 
     for url in rss_urls:
         print(f"[RSS] 正在解析: {url}")
+        source_articles: List[Dict[str, Any]] = []
         try:
             # 伪装请求头，模拟真实浏览器
             headers = {
@@ -101,13 +198,24 @@ def fetch_and_filter_rss(rss_urls: List[str]) -> List[Dict[str, Any]]:
                     # 获取摘要，有些 RSS 用 summary，有些用 description
                     raw_summary = entry.get("summary") or entry.get("description") or ""
                     clean_summary = _strip_html(raw_summary)
+                    source_name = feed.feed.get("title", "Unknown Source")
 
-                    filtered_articles.append({
+                    source_articles.append({
                         "title": title,
                         "link": link,
                         "summary": clean_summary,
-                        "published_time": article_utc_date.isoformat()
+                        "published_time": article_utc_date.isoformat(),
+                        "source_name": source_name,
+                        "source_url": url,
                     })
+
+            source_articles.sort(key=lambda item: item.get("published_time", ""), reverse=True)
+            selected_articles = _select_articles_for_source(
+                source_articles,
+                source_url=url,
+                max_items_per_source=max_items_per_source,
+            )
+            filtered_articles.extend(selected_articles)
                     
         except Exception as e:
             print(f"[错误] 处理订阅源 {url} 失败: {e}")
