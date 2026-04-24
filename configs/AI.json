@@ -1,14 +1,14 @@
 {
-  "channel_name": "AI前沿资讯",
+  "channel_name": "AI Frontier News",
   "rss_urls": [
-    "https://openai.com/blog/rss.xml",
+    "https://openai.com/news/rss.xml",
+    "https://www.anthropic.com/news",
+    "https://simonwillison.net/atom/everything/",
     "https://huggingface.co/blog/feed.xml",
-    "https://www.technologyreview.com/topic/artificial-intelligence/feed/",
-    "https://venturebeat.com/category/ai/feed/",
-    "https://export.arxiv.org/rss/cs.AI"
+    "https://www.latent.space/feed.xml"
   ],
   "webhook_env": "DISCORD_WEBHOOK_AI",
-  "topic": "Artificial Intelligence, Machine Learning, Large Language Models (LLMs), AI Industry News",
+  "topic": "LLM, AI agents, agent frameworks, AI application development, RAG, tool calling, OpenAI API, Claude, Hugging Face",
   "max_items_per_source": 30,
   "max_push_per_run": 8,
   "time_decay_gravity": 1.8,
@@ -19,22 +19,19 @@
   },
   "evaluation_focus": {
     "relevance_criteria": [
-      "New model releases or major version updates from recognized AI labs",
-      "Benchmark results with quantitative comparisons to baselines",
-      "Novel architectures, training techniques, or algorithmic breakthroughs",
-      "Official technical documentation or research papers"
+      "LLM applications, AI agents, or agent-based systems",
+      "New model capabilities (reasoning, tool use, long context, multimodality)",
+      "AI developer tools, SDKs, frameworks, or APIs (e.g. OpenAI, LangChain, etc.)"
     ],
     "quality_indicators": [
-      "Includes quantitative results (accuracy, perplexity, speed, cost metrics)",
-      "Provides code repository, model weights, or reproducible details",
-      "Compares with state-of-the-art baselines or previous versions",
-      "Discusses limitations, failure cases, or real-world applicability"
+      "Includes code examples, demos, benchmarks, or experiments",
+      "Published by official sources, researchers, or experienced engineers",
+      "Provides in-depth technical insights rather than surface-level summaries"
     ],
     "reject_patterns": [
-      "Model announcements without benchmark data or technical details",
-      "Opinion pieces or predictions without empirical evidence",
-      "Tutorial content without novel techniques or insights",
-      "Reposted news aggregation with no original analysis"
+      "Marketing-heavy or promotional content",
+      "Low-value AI tool lists (e.g. 'Top 10 AI tools')",
+      "Rewritten news without original insights or technical depth"
     ]
   }
 }
