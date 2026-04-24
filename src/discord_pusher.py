@@ -18,7 +18,7 @@ def push_to_discord(article_data: Dict[str, Any], ai_result: Dict[str, Any], web
 
     参数:
         article_data: 包含 'title' 和 'link' 的原文数据
-        ai_result: 包含 'score', 'bullet_points', 'impact_analysis' 的 AI 解析结果
+        ai_result: 包含 'relevance_score', 'quality_score', 'bullet_points', 'impact_analysis' 的 AI 解析结果
         webhook_url: 目标频道的动态 Webhook URL
 
     返回:
@@ -31,7 +31,10 @@ def push_to_discord(article_data: Dict[str, Any], ai_result: Dict[str, Any], web
     title = article_data.get("title", "未知标题")
     link = article_data.get("link", "#")
     
-    score = ai_result.get("score", 0)
+    relevance_score = ai_result.get("relevance_score", 0)
+    quality_score = ai_result.get("quality_score", 0)
+    composite_score = round(relevance_score * 0.4 + quality_score * 0.6, 1)
+    
     translated_title = ai_result.get("translated_title", title)
     bullet_points = ai_result.get("bullet_points", [])
     impact_analysis = ai_result.get("impact_analysis", "No analysis / 无分析。")
@@ -42,7 +45,7 @@ def push_to_discord(article_data: Dict[str, Any], ai_result: Dict[str, Any], web
 
     # 严格遵循需求文档的排版模板，包含手机端分割线防折行优化与链接防预览膨胀 (双语版)
     markdown_content = (
-        f"🔥 **[{title}]** (AI Score: {score}/10)\n"
+        f"🔥 **[{title}]** (R:{relevance_score} Q:{quality_score} ≈{composite_score}/10)\n"
         f"🇨🇳 **[{translated_title}]**\n\n"
         f"📝 **Key Takeaways / 核心速览**：\n"
         f"• {bullet_points[0]}\n"

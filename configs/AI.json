@@ -11,10 +11,9 @@
   "topic": "Artificial Intelligence, Machine Learning, Large Language Models (LLMs), AI Industry News",
   "max_items_per_source": 30,
   "max_push_per_run": 8,
+  "time_decay_gravity": 1.8,
   "min_scores": {
     "relevance": 7,
-    "frontier": 8,
-    "attention": 7,
-    "final": 8
+    "quality": 7
   }
 }

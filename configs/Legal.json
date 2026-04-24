@@ -11,10 +11,9 @@
   "topic": "Law, Legal Policy, Court Rulings, Regulation, Compliance, Privacy Law, AI Law, Major Legislation",
   "max_items_per_source": 20,
   "max_push_per_run": 6,
+  "time_decay_gravity": 1.2,
   "min_scores": {
     "relevance": 7,
-    "frontier": 6,
-    "attention": 6,
-    "final": 7
+    "quality": 6
   }
 }

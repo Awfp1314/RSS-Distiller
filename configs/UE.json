@@ -10,10 +10,9 @@
   "topic": "Unreal Engine, 3D Rendering, Game Development, Tech Art, Epic Games",
   "max_items_per_source": 20,
   "max_push_per_run": 6,
+  "time_decay_gravity": 1.5,
   "min_scores": {
     "relevance": 7,
-    "frontier": 8,
-    "attention": 7,
-    "final": 8
+    "quality": 7
   }
 }
