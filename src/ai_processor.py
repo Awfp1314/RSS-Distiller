@@ -69,9 +69,12 @@ OUTPUT_FORMAT = (
     "- 'relevance_score': (Integer, 0-10)\n"
     "- 'quality_score': (Integer, 0-10)\n"
     "- 'translated_title': (Chinese translation of the original title)\n"
-    "- 'core_breakthrough': (One-sentence summary in format: '[English] / [中文]')\n"
-    "- 'bullet_points': (List of exactly 3 key points, each in format: '[English] / [中文]')\n"
-    "- 'impact_analysis': (Impact analysis in format: '[English] / [中文]')"
+    "- 'core_breakthrough': (One-sentence summary, pure English text)\n"
+    "- 'core_breakthrough_cn': (Chinese translation of core_breakthrough)\n"
+    "- 'bullet_points': (List of exactly 3 key points in pure English)\n"
+    "- 'bullet_points_cn': (List of exactly 3 key points in Chinese, corresponding to bullet_points)\n"
+    "- 'impact_analysis': (Impact analysis in pure English)\n"
+    "- 'impact_analysis_cn': (Chinese translation of impact_analysis)"
 )
 
 
@@ -162,12 +165,18 @@ def evaluate_article(
         print(f"  -> [过滤] 社区问答/求助类标题已拦截: {title}")
         return None
 
+    # 如果摘要为空或太短，使用标题作为补充
+    effective_summary = summary.strip() if summary else ""
+    if len(effective_summary) < 20:
+        effective_summary = f"{title}. {effective_summary}".strip()
+        print(f"  -> [提示] 摘要过短，使用标题补充: {title}")
+
     # 构建用户输入，避免摘要太长消耗过多 Token（截断前 1500 个字符）
     user_content = (
         f"Source Name: {source_name or 'Unknown'}\n"
         f"Source URL: {source_url or 'Unknown'}\n"
         f"Title: {title}\n\n"
-        f"Summary: {summary[:1500]}"
+        f"Summary: {effective_summary[:1500]}"
     )
     
     # 构建评分标准文本
@@ -179,6 +188,7 @@ def evaluate_article(
         relevance_min=relevance_min,
         quality_min=quality_min,
         evaluation_focus=focus_text,
+        output_format=OUTPUT_FORMAT,
     )
 
     def _parse_json_with_fallback(raw: str) -> Dict[str, Any]:

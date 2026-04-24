@@ -37,8 +37,16 @@ def push_to_discord(article_data: Dict[str, Any], ai_result: Dict[str, Any], web
     composite_score = round(relevance_score * 0.4 + quality_score * 0.6, 1)
     
     translated_title = ai_result.get("translated_title", title)
+    
+    # 新格式：英文和中文分开
+    core_breakthrough = ai_result.get("core_breakthrough", "")
+    core_breakthrough_cn = ai_result.get("core_breakthrough_cn", "")
+    
     bullet_points = ai_result.get("bullet_points", [])
-    impact_analysis = ai_result.get("impact_analysis", "No analysis / 无分析。")
+    bullet_points_cn = ai_result.get("bullet_points_cn", [])
+    
+    impact_analysis = ai_result.get("impact_analysis", "No analysis available.")
+    impact_analysis_cn = ai_result.get("impact_analysis_cn", "无分析。")
     
     # 计算文章年龄
     published_time_str = article_data.get("published_time", "")
@@ -60,20 +68,31 @@ def push_to_discord(article_data: Dict[str, Any], ai_result: Dict[str, Any], web
 
     # 容错：确保 bullet_points 至少有 3 项，避免索引越界
     while len(bullet_points) < 3:
-        bullet_points.append("No data / 无")
+        bullet_points.append("No data")
+    while len(bullet_points_cn) < 3:
+        bullet_points_cn.append("无")
 
-    # 严格遵循需求文档的排版模板，包含手机端分割线防折行优化与链接防预览膨胀 (双语版)
+    # 优化后的排版：英文/中文分开，紧凑格式（Discord 需要双换行）
+    # 末尾添加零宽空格以保持空行（Discord 会去除纯空白）
     markdown_content = (
         f"🔥 **[{title}]** (R:{relevance_score} Q:{quality_score} ≈{composite_score}/10 | {age_display})\n"
-        f"🇨🇳 **[{translated_title}]**\n\n"
-        f"📝 **Key Takeaways / 核心速览**：\n"
+        f"🇨🇳 **[{translated_title}]**\n\n\n"
+        f"📝 **KEY TAKEAWAYS/核心速览**\n"
         f"• {bullet_points[0]}\n"
         f"• {bullet_points[1]}\n"
-        f"• {bullet_points[2]}\n\n"
-        f"💡 **Impact Analysis / 深度分析**：\n"
-        f"{impact_analysis}\n\n"
-        f"🔗 **Link / 原文链接**：<{link}>\n\n"
-        f"━━━━━━━━━━━━━━━"
+        f"• {bullet_points[2]}\n"
+        f"• {bullet_points_cn[0]}\n"
+        f"• {bullet_points_cn[1]}\n"
+        f"• {bullet_points_cn[2]}\n\n\n"
+        f"💡 **IMPACT ANALYSIS/深度分析**\n"
+        f"💡 {impact_analysis}\n"
+        f"💡 {impact_analysis_cn}\n\n\n"
+        f"🔗 **ORIGINAL LINK/原文链接**\n"
+        f"🔗 <{link}>\n\n"
+        f"━━━━━━━━━━━━━━━\n"
+        f"**dividing line**\n"
+        f"━━━━━━━━━━━━━━━\n\n\n"
+        f"\u200B"  # 零宽空格，防止 Discord 去除末尾空行
     )
 
     payload = {
