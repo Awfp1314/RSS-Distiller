@@ -1,0 +1,20 @@
+{
+  "channel_name": "AI前沿资讯",
+  "rss_urls": [
+    "https://openai.com/blog/rss.xml",
+    "https://huggingface.co/blog/feed.xml",
+    "https://www.technologyreview.com/topic/artificial-intelligence/feed/",
+    "https://venturebeat.com/category/ai/feed/",
+    "https://export.arxiv.org/rss/cs.AI"
+  ],
+  "webhook_env": "DISCORD_WEBHOOK_AI",
+  "topic": "Artificial Intelligence, Machine Learning, Large Language Models (LLMs), AI Industry News",
+  "max_items_per_source": 30,
+  "max_push_per_run": 8,
+  "min_scores": {
+    "relevance": 7,
+    "frontier": 8,
+    "attention": 7,
+    "final": 8
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "channel_name": "虚幻引擎开发",
+  "rss_urls": [
+    "https://www.unrealengine.com/en-US/rss",
+    "https://80.lv/category/unreal-engine/feed/",
+    "https://www.cgchannel.com/tag/unreal-engine/feed/",
+    "https://www.unrealengine.com/en-US/spotlights/rss"
+  ],
+  "webhook_env": "DISCORD_WEBHOOK_UE",
+  "topic": "Unreal Engine, 3D Rendering, Game Development, Tech Art, Epic Games",
+  "max_items_per_source": 20,
+  "max_push_per_run": 6,
+  "min_scores": {
+    "relevance": 7,
+    "frontier": 8,
+    "attention": 7,
+    "final": 8
+  }
+}

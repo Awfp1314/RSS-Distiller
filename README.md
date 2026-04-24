@@ -31,7 +31,7 @@ Why it exists:
 
 ## Key Features
 
-- 🎯 **Topic Routing**: multi-channel routing via `CHANNELS_CONFIG`, each with independent RSS sources, Discord webhook, and domain `topic`.
+- 🎯 **Topic Routing**: multi-channel routing via `configs/*.json` files, each with independent RSS sources, Discord webhook, and domain `topic`.
 - 🧠 **Triple Evaluation**: DeepSeek scores `relevance_score`, `frontier_score`, and `attention_score`; low-signal content is hard-filtered.
 - 🌐 **Bilingual Output**: auto-generates EN/ZH title translation, key points, and impact analysis.
 - 🔁 **Deduplication**: Turso-backed link storage prevents duplicate pushes.
@@ -59,11 +59,11 @@ RSS Sources
 ```
 
 Core modules:
-- `main.py`: orchestration and channel routing
-- `rss_parser.py`: feed fetch, parsing, time-window filtering
-- `ai_processor.py`: DeepSeek prompt + scoring + structured extraction
-- `discord_pusher.py`: markdown message formatting + webhook push
-- `db_manager.py`: Turso HTTP pipeline API (init/check/insert)
+- `main.py`: orchestration and channel routing (loads `configs/*.json`)
+- `src/rss_parser.py`: feed fetch, parsing, time-window filtering
+- `src/ai_processor.py`: DeepSeek prompt + scoring + structured extraction
+- `src/discord_pusher.py`: markdown message formatting + webhook push
+- `src/db_manager.py`: Turso HTTP pipeline API (init/check/insert)
 
 ---
 
@@ -102,14 +102,16 @@ DISCORD_WEBHOOK_LEGAL=https://discord.com/api/webhooks/...
 python main.py
 ```
 
-### 4) Inline module tests
+### 4) Module tests
 
 ```bash
-python rss_parser.py
-python db_manager.py
-python ai_processor.py
-python discord_pusher.py
+python test/test_rss_parser.py
+python test/test_db_manager.py
+python test/test_ai_processor.py
+python test/test_discord_pusher.py
 ```
+
+> Tests call real external services (DeepSeek API, Turso DB, Discord webhook). Ensure your `.env` is configured before running them.
 
 ---
 
@@ -140,11 +142,11 @@ Workflow files:
 We are building a community-driven **hardcore tech intelligence project**. Contributions are welcome:
 
 1. **Submit high-quality RSS sources**
-   - Add trustworthy sources to the proper channel in `main.py`.
-2. **Improve the system prompt**
-   - Tune `SYSTEM_PROMPT_TEMPLATE` in `ai_processor.py` to improve relevance and summary quality.
-3. **Add new channels**
-   - Example: Digital Twin, WebAssembly, Robotics, Cybersecurity.
+   - Add or edit JSON files in `configs/` (e.g., `configs/AI.json`) — each file represents a channel.
+2. **Add new channels**
+   - Create a new `configs/<channel>.json` file following the existing schema, add the corresponding webhook secret to GitHub Actions secrets, and you are done.
+3. **Improve the system prompt**
+   - Tune `SYSTEM_PROMPT_TEMPLATE` in `src/ai_processor.py` to improve relevance and summary quality.
 4. **Open Issues / PRs**
    - Bug reports, feature requests, prompt experiments, and architecture improvements are all welcome.
 

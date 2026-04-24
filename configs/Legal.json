@@ -1,0 +1,20 @@
+{
+  "channel_name": "法律前沿资讯",
+  "rss_urls": [
+    "https://www.scotusblog.com/feed/",
+    "https://www.govinfo.gov/rss/bills.xml",
+    "https://www.sec.gov/news/pressreleases.rss",
+    "https://www.judiciary.uk/feed/",
+    "https://www.eff.org/rss/updates.xml"
+  ],
+  "webhook_env": "DISCORD_WEBHOOK_LEGAL",
+  "topic": "Law, Legal Policy, Court Rulings, Regulation, Compliance, Privacy Law, AI Law, Major Legislation",
+  "max_items_per_source": 20,
+  "max_push_per_run": 6,
+  "min_scores": {
+    "relevance": 7,
+    "frontier": 6,
+    "attention": 6,
+    "final": 7
+  }
+}

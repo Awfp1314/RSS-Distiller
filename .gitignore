@@ -2,7 +2,7 @@
 .env
 
 # 文档
-AI 自动化前沿资讯推送器项目需求文档.md
+docs/AI 自动化前沿资讯推送器项目需求文档.md
 
 # Python
 __pycache__/

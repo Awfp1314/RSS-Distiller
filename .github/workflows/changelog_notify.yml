@@ -77,9 +77,9 @@ jobs:
               lines.append("No commit details were found in this push event.")
 
           if compare_url:
-              lines.append("")
-              lines.append(f"🔎 **Compare Changes:** {compare_url}")
-          lines.append(f"📋 **Workflow Run:** {run_url}")
+                lines.append("")
+                lines.append(f"🔎 **Compare Changes:** <{compare_url}>")
+          lines.append(f"📋 **Workflow Run:** <{run_url}>")
           lines.append("━━━━━━━━━━━━━━━━━━━━")
 
           content = "\n".join(lines)

@@ -6,64 +6,50 @@ main.py - 自动化资讯推送器主入口
 - 串联四大模块，实现"RSS 获取 -> 数据库防重 -> AI 打分过滤 -> 动态 Discord 推送 -> 数据库更新"的完整业务闭环。
 """
 
+import json
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
-from ai_processor import evaluate_article
-from db_manager import init_db, insert_link, link_exists
-from discord_pusher import push_to_discord
-from rss_parser import fetch_and_filter_rss
+from src.ai_processor import evaluate_article
+from src.db_manager import init_db, insert_link, link_exists
+from src.discord_pusher import push_to_discord
+from src.rss_parser import fetch_and_filter_rss
 
 # 加载环境变量（必须尽早调用，确保能读到包含 webhook_env 在内的变量）
 load_dotenv()
 
 # ============================================================
-# 多频道路由配置字典 (Dictionary Routing)
+# 从 configs/ 目录动态加载多频道路由配置
 # ============================================================
-CHANNELS_CONFIG = {
-    "AI前沿资讯": {
-        "rss_urls": [
-            "https://openai.com/blog/rss.xml",                                 # OpenAI 官方博客 RSS（稳定可抓取）
-            "https://huggingface.co/blog/feed.xml",                            # Hugging Face 官方博客与动态
-            "https://www.technologyreview.com/topic/artificial-intelligence/feed/", # MIT Technology Review (AI 分类)
-            "https://venturebeat.com/category/ai/feed/",                       # VentureBeat AI 行业动态
-            "https://export.arxiv.org/rss/cs.AI",                              # arXiv cs.AI 研究前沿
-        ],
-        "webhook_env": "DISCORD_WEBHOOK_AI",
-        "topic": "Artificial Intelligence, Machine Learning, Large Language Models (LLMs), AI Industry News",
-        "max_items_per_source": 30,
-        "max_push_per_run": 8,
-        "min_scores": {"relevance": 7, "frontier": 8, "attention": 7, "final": 8},
-    },
-    "虚幻引擎开发": {
-        "rss_urls": [
-            "https://www.unrealengine.com/en-US/rss",                          # Unreal Engine 官方 RSS
-            "https://80.lv/category/unreal-engine/feed/",                      # 80 Level (UE 技术美术与开发)
-            "https://www.cgchannel.com/tag/unreal-engine/feed/",               # CG Channel UE 行业与技术动态
-            "https://www.unrealengine.com/en-US/spotlights/rss",               # Unreal Engine 官方案例与技术实践
-        ],
-        "webhook_env": "DISCORD_WEBHOOK_UE",
-        "topic": "Unreal Engine, 3D Rendering, Game Development, Tech Art, Epic Games",
-        "max_items_per_source": 20,
-        "max_push_per_run": 6,
-        "min_scores": {"relevance": 7, "frontier": 8, "attention": 7, "final": 8},
-    },
-    "法律前沿资讯": {
-        "rss_urls": [
-            "https://www.scotusblog.com/feed/",                                # SCOTUSblog（美国最高法院相关）
-            "https://www.govinfo.gov/rss/bills.xml",                           # GovInfo 国会法案动态（高频）
-            "https://www.sec.gov/news/pressreleases.rss",                      # SEC 官方执法/监管动态
-            "https://www.judiciary.uk/feed/",                                  # UK Judiciary（英国司法系统动态）
-            "https://www.eff.org/rss/updates.xml",                             # EFF（数字权利与科技法律）
-        ],
-        "webhook_env": "DISCORD_WEBHOOK_LEGAL",
-        "topic": "Law, Legal Policy, Court Rulings, Regulation, Compliance, Privacy Law, AI Law, Major Legislation",
-        "max_items_per_source": 20,
-        "max_push_per_run": 6,
-        "min_scores": {"relevance": 7, "frontier": 6, "attention": 6, "final": 7},
-    }
-}
+_REQUIRED_FIELDS = {"channel_name", "rss_urls", "webhook_env", "topic"}
+_DEFAULTS = {"max_items_per_source": 30, "max_push_per_run": 8}
+
+def _load_channels_config() -> dict:
+    configs_dir = Path(__file__).parent / "configs"
+    result = {}
+    for json_file in sorted(configs_dir.glob("*.json")):
+        try:
+            data = json.loads(json_file.read_text(encoding="utf-8"))
+            missing = _REQUIRED_FIELDS - data.keys()
+            if missing:
+                print(f"[警告] 跳过 {json_file.name}：缺少必填字段 {missing}")
+                continue
+            channel_name = data["channel_name"]
+            result[channel_name] = {
+                "rss_urls": data["rss_urls"],
+                "webhook_env": data["webhook_env"],
+                "topic": data["topic"],
+                "max_items_per_source": data.get("max_items_per_source", _DEFAULTS["max_items_per_source"]),
+                "max_push_per_run": data.get("max_push_per_run", _DEFAULTS["max_push_per_run"]),
+                "min_scores": data.get("min_scores", {}),
+            }
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"[警告] 跳过 {json_file.name}：解析失败 ({e})")
+    return result
+
+CHANNELS_CONFIG = _load_channels_config()
 
 
 def main():
