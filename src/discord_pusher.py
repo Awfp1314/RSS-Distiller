@@ -7,6 +7,7 @@ discord_pusher.py - Discord 格式化推送模块
 - 通过 Webhook 动态推送到对应的 Discord 频道
 """
 
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 import requests
@@ -38,6 +39,24 @@ def push_to_discord(article_data: Dict[str, Any], ai_result: Dict[str, Any], web
     translated_title = ai_result.get("translated_title", title)
     bullet_points = ai_result.get("bullet_points", [])
     impact_analysis = ai_result.get("impact_analysis", "No analysis / 无分析。")
+    
+    # 计算文章年龄
+    published_time_str = article_data.get("published_time", "")
+    age_display = "unknown"
+    if published_time_str:
+        try:
+            published_time = datetime.fromisoformat(published_time_str)
+            now_utc = datetime.now(timezone.utc)
+            age_hours = (now_utc - published_time).total_seconds() / 3600
+            
+            # 格式化显示：小于 1 小时显示分钟，否则显示小时
+            if age_hours < 1:
+                age_minutes = int(age_hours * 60)
+                age_display = f"{age_minutes}m ago"
+            else:
+                age_display = f"{age_hours:.1f}h ago"
+        except Exception:
+            pass  # 时间解析失败，保持 "unknown"
 
     # 容错：确保 bullet_points 至少有 3 项，避免索引越界
     while len(bullet_points) < 3:
@@ -45,7 +64,7 @@ def push_to_discord(article_data: Dict[str, Any], ai_result: Dict[str, Any], web
 
     # 严格遵循需求文档的排版模板，包含手机端分割线防折行优化与链接防预览膨胀 (双语版)
     markdown_content = (
-        f"🔥 **[{title}]** (R:{relevance_score} Q:{quality_score} ≈{composite_score}/10)\n"
+        f"🔥 **[{title}]** (R:{relevance_score} Q:{quality_score} ≈{composite_score}/10 | {age_display})\n"
         f"🇨🇳 **[{translated_title}]**\n\n"
         f"📝 **Key Takeaways / 核心速览**：\n"
         f"• {bullet_points[0]}\n"

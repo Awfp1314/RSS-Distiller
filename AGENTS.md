@@ -2,7 +2,7 @@
 
 ## Entrypoint and Flow
 - Runtime entrypoint is `main.py`; it wires `src/rss_parser.py -> src/db_manager.py -> src/ai_processor.py -> src/discord_pusher.py`.
-- Multi-channel routing is loaded from `configs/*.json` in `main.py` (RSS URLs, `topic`, and webhook env var per channel). Each channel has its own `max_items_per_source`, `max_push_per_run`, and `min_scores` thresholds. Notably, the **法律前沿资讯** channel uses lower thresholds (`relevance: 7, frontier: 6, attention: 6, final: 7`) than the others.
+- Multi-channel routing is loaded from `configs/*.json` in `main.py` (RSS URLs, `topic`, webhook env var, and domain-specific `evaluation_focus` per channel). Each channel has its own `max_items_per_source`, `max_push_per_run`, and `min_scores` thresholds (e.g., Legal channel uses `relevance: 7, quality: 6`).
 
 ## Python & Execution
 - Python **3.10+** required (CI pins `3.10`).
@@ -32,8 +32,10 @@
   - `.github/workflows/daily_push.yml` runs `python main.py` on schedule (`0 0 * * *`) and manual dispatch.
   - `.github/workflows/changelog_notify.yml` triggers on every push to `main` (not scheduled); posts only commits whose first line starts with `feat:`, `fix:`, `perf:`, or `refactor:`. Silently skips if no matching commits or if `DISCORD_WEBHOOK_CHANGELOG` is unset/invalid.
 
-## Candidate Ranking
-- After AI scoring, `main.py` sorts passing candidates by `score + frontier_score + attention_score` (descending), breaking ties by `attention_score` then `frontier_score`. Only the top `max_push_per_run` are pushed per channel per run.
+## AI Scoring and Ranking
+- DeepSeek evaluates articles on **two dimensions**: `relevance_score` (0-10) and `quality_score` (0-10). If either score falls below the channel's `min_scores` threshold, both are set to 0 and the article is rejected.
+- Ranking formula in `main.py`: `base_score = relevance_score * 0.4 + quality_score * 0.6`. If `time_decay_gravity > 0`, applies time decay: `final_score = base_score * (1 / (1 + (age_hours / halflife) ^ gravity))`. Sorts by `(final_score, quality_score)` descending.
+- Only the top `max_push_per_run` candidates are pushed per channel per run.
 
 ## Repo-Local Skills
 - `.opencode/skills/编码指南/SKILL.md` contains AI agent coding guidelines (Karpathy-inspired). Load with the `skill` tool when writing/reviewing code.

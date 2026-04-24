@@ -12,8 +12,29 @@
   "max_items_per_source": 20,
   "max_push_per_run": 6,
   "time_decay_gravity": 1.2,
+  "time_decay_halflife": 24,
   "min_scores": {
     "relevance": 7,
     "quality": 6
+  },
+  "evaluation_focus": {
+    "relevance_criteria": [
+      "Supreme Court rulings or major appellate court decisions",
+      "New legislation, regulatory changes, or enforcement actions",
+      "Privacy law, AI governance, or tech policy developments",
+      "Precedent-setting cases with broad jurisdictional impact"
+    ],
+    "quality_indicators": [
+      "Cites specific case numbers, statutes, or regulatory references",
+      "Analyzes legal reasoning, dissenting opinions, or implications",
+      "Discusses enforcement mechanisms, compliance requirements, or penalties",
+      "Provides expert legal analysis beyond news reporting"
+    ],
+    "reject_patterns": [
+      "Opinion pieces without case law or statutory citations",
+      "General legal advice or FAQ-style content",
+      "News aggregation without legal analysis or expert commentary",
+      "Speculative predictions without grounding in existing law"
+    ]
   }
 }

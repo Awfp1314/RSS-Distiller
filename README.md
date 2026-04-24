@@ -20,19 +20,19 @@
 
 ## Introduction
 
-RSS Distiller is an AI-powered tech intelligence pipeline that fetches RSS articles, applies a **topic-aware triple evaluation** with DeepSeek (**Relevance + Frontier Value + Attention**), and pushes only high-value bilingual summaries to Discord.
+RSS Distiller is an AI-powered tech intelligence pipeline that fetches RSS articles, applies a **topic-aware dual evaluation** with DeepSeek (**Relevance + Quality**), and pushes only high-value bilingual summaries to Discord.
 
 Why it exists:
 - Developers subscribe to many sources but still miss signal in noise.
-- Generic summarizers rank quality but often ignore domain relevance and actual market attention.
-- RSS Distiller adds strict hard filters: if an article is off-topic, not frontier enough, or lacks attention signal, it gets `score=0` and is dropped.
+- Generic summarizers rank quality but often ignore domain relevance.
+- RSS Distiller adds strict hard filters: if an article is off-topic or lacks quality, it gets `score=0` and is dropped.
 
 ---
 
 ## Key Features
 
 - 🎯 **Topic Routing**: multi-channel routing via `configs/*.json` files, each with independent RSS sources, Discord webhook, and domain `topic`.
-- 🧠 **Triple Evaluation**: DeepSeek scores `relevance_score`, `frontier_score`, and `attention_score`; low-signal content is hard-filtered.
+- 🧠 **Dual Evaluation**: DeepSeek scores `relevance_score` and `quality_score`; low-signal content is hard-filtered.
 - 🌐 **Bilingual Output**: auto-generates EN/ZH title translation, key points, and impact analysis.
 - 🔁 **Deduplication**: Turso-backed link storage prevents duplicate pushes.
 - 📉 **Source Flood Control**: per-source candidate caps prevent a single feed from dominating the queue.
@@ -50,10 +50,9 @@ RSS Sources
    -> Link Dedup Check (db_manager.py / Turso)
    -> AI Evaluation (ai_processor.py)
         1) Relevance Score (0-10)
-        2) Frontier Score (0-10)
-        3) Attention Score (0-10)
-        4) Hard thresholds -> score=0 if not qualified
-   -> Candidate Ranking (composite score)
+        2) Quality Score (0-10)
+        3) Hard thresholds -> score=0 if not qualified
+   -> Candidate Ranking (composite score: relevance * 0.4 + quality * 0.6)
    -> Discord Push (discord_pusher.py)
    -> Insert Link to DB (on successful push)
 ```

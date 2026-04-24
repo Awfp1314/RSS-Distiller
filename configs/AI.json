@@ -12,8 +12,29 @@
   "max_items_per_source": 30,
   "max_push_per_run": 8,
   "time_decay_gravity": 1.8,
+  "time_decay_halflife": 6,
   "min_scores": {
     "relevance": 7,
     "quality": 7
+  },
+  "evaluation_focus": {
+    "relevance_criteria": [
+      "New model releases or major version updates from recognized AI labs",
+      "Benchmark results with quantitative comparisons to baselines",
+      "Novel architectures, training techniques, or algorithmic breakthroughs",
+      "Official technical documentation or research papers"
+    ],
+    "quality_indicators": [
+      "Includes quantitative results (accuracy, perplexity, speed, cost metrics)",
+      "Provides code repository, model weights, or reproducible details",
+      "Compares with state-of-the-art baselines or previous versions",
+      "Discusses limitations, failure cases, or real-world applicability"
+    ],
+    "reject_patterns": [
+      "Model announcements without benchmark data or technical details",
+      "Opinion pieces or predictions without empirical evidence",
+      "Tutorial content without novel techniques or insights",
+      "Reposted news aggregation with no original analysis"
+    ]
   }
 }

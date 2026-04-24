@@ -21,25 +21,49 @@ if __name__ == "__main__":
 
     print(f"\n[测试 1] 高价值文章打分测试...")
     print(f"标题: {test_title_1}")
-    result_1 = evaluate_article(test_title_1, test_summary_1, topic="Unreal Engine, 3D Rendering, Game Development")
+    result_1 = evaluate_article(
+        test_title_1, 
+        test_summary_1, 
+        topic="Unreal Engine, 3D Rendering, Game Development",
+        relevance_min=7,
+        quality_min=7
+    )
     if result_1:
         print("提炼结果:")
-        print(json.dumps(result_1, ensure_ascii=False, indent=2))
+        print(f"  相关性评分: {result_1.get('relevance_score')}/10")
+        print(f"  质量评分: {result_1.get('quality_score')}/10")
+        print(f"  综合评分: {result_1.get('relevance_score', 0) * 0.4 + result_1.get('quality_score', 0) * 0.6:.1f}/10")
+        print(f"  翻译标题: {result_1.get('translated_title')}")
+        print(f"  核心突破: {result_1.get('core_breakthrough')}")
     else:
         print("未通过筛选（这可能不符合预期，请检查 API 或 Prompt）。")
 
     print(f"\n[测试 2] 低价值文章拦截测试...")
     print(f"标题: {test_title_2}")
-    result_2 = evaluate_article(test_title_2, test_summary_2, topic="general technology")
+    result_2 = evaluate_article(
+        test_title_2, 
+        test_summary_2, 
+        topic="general technology",
+        relevance_min=7,
+        quality_min=7
+    )
     if not result_2:
         print("测试通过：成功拦截低价值文章。")
     else:
-        print(f"测试失败：低价值文章未被拦截 (得分: {result_2.get('score')})。")
+        print(f"测试失败：低价值文章未被拦截")
+        print(f"  相关性: {result_2.get('relevance_score')}, 质量: {result_2.get('quality_score')}")
 
     print(f"\n[测试 3] 领域不相关拦截测试 (Hard Filter)...")
     print(f"标题: {test_title_3}")
-    result_3 = evaluate_article(test_title_3, test_summary_3, topic="Artificial Intelligence, Large Language Models")
+    result_3 = evaluate_article(
+        test_title_3, 
+        test_summary_3, 
+        topic="Artificial Intelligence, Large Language Models",
+        relevance_min=7,
+        quality_min=7
+    )
     if not result_3:
         print("测试通过：成功拦截领域不相关文章。")
     else:
-        print(f"测试失败：领域不相关文章未被拦截 (得分: {result_3.get('score')})。")
+        print(f"测试失败：领域不相关文章未被拦截")
+        print(f"  相关性: {result_3.get('relevance_score')}, 质量: {result_3.get('quality_score')}")

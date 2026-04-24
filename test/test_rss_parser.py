@@ -19,14 +19,23 @@ if __name__ == "__main__":
     print(f"当前 UTC 时间: {now.isoformat()}")
     print("抓取并筛选 24 小时内的文章...\n")
 
-    results = fetch_and_filter_rss(TEST_URLS)
+    results = fetch_and_filter_rss(TEST_URLS, max_items_per_source=30)
 
     print(f"\n[结果] 共提取到 {len(results)} 篇 24 小时内的有效文章:")
     print("-" * 50)
 
     for idx, article in enumerate(results, 1):
+        # 计算文章年龄
+        try:
+            published_time = datetime.fromisoformat(article['published_time'])
+            age_hours = (now - published_time).total_seconds() / 3600
+            age_display = f"{age_hours:.1f}h ago"
+        except Exception:
+            age_display = "unknown"
+        
         print(f"{idx}. {article['title']}")
-        print(f"   发布时间: {article['published_time']}")
+        print(f"   发布时间: {article['published_time']} ({age_display})")
+        print(f"   来源: {article.get('source_name', 'Unknown')}")
         print(f"   文章链接: {article['link']}")
         print(f"   摘要摘录: {article['summary'][:60]}...")
         print("-" * 50)
@@ -36,4 +45,7 @@ if __name__ == "__main__":
                 print(f"... 还有 {len(results) - 5} 篇文章被隐藏 ...")
             break
 
-    print("\n测试完成。请确认上述文章的发布时间是否都在当前 UTC 时间的 24 小时以内。")
+    print("\n测试完成。请确认：")
+    print("  1. 所有文章的发布时间都在 24 小时以内")
+    print("  2. published_time 字段格式正确（ISO 8601 格式）")
+    print("  3. 文章年龄计算正确")

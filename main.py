@@ -45,6 +45,7 @@ def _load_channels_config() -> dict:
                 "max_items_per_source": data.get("max_items_per_source", _DEFAULTS["max_items_per_source"]),
                 "max_push_per_run": data.get("max_push_per_run", _DEFAULTS["max_push_per_run"]),
                 "min_scores": data.get("min_scores", {}),
+                "evaluation_focus": data.get("evaluation_focus"),
             }
         except (json.JSONDecodeError, OSError) as e:
             print(f"[警告] 跳过 {json_file.name}：解析失败 ({e})")
@@ -86,6 +87,8 @@ def main():
         relevance_min = int(min_scores.get("relevance", 7))
         quality_min = int(min_scores.get("quality", 7))
         time_decay_gravity = float(config.get("time_decay_gravity", 0))
+        time_decay_halflife = float(config.get("time_decay_halflife", 12))
+        evaluation_focus = config.get("evaluation_focus")
 
         # 2. 模块 1：抓取并过滤当前频道 24 小时内的文章
         print(f"\n[{channel_name} - 步骤 1] 抓取并执行 24 小时过滤...")
@@ -125,6 +128,7 @@ def main():
                 source_url=article.get("source_url", ""),
                 relevance_min=relevance_min,
                 quality_min=quality_min,
+                evaluation_focus=evaluation_focus,
             )
 
             if not ai_result:
@@ -152,8 +156,8 @@ def main():
                         published_time = datetime.fromisoformat(published_time_str)
                         now_utc = datetime.now(timezone.utc)
                         age_hours = (now_utc - published_time).total_seconds() / 3600
-                        # 时间衰减公式：time_factor = 1 / (1 + (age_hours / 12) ^ gravity)
-                        time_factor = 1 / (1 + (age_hours / 12) ** time_decay_gravity)
+                        # 时间衰减公式：time_factor = 1 / (1 + (age_hours / halflife) ^ gravity)
+                        time_factor = 1 / (1 + (age_hours / time_decay_halflife) ** time_decay_gravity)
                         final_score = base_score * time_factor
                         return (final_score, quality_score)
                     except Exception:

@@ -26,30 +26,44 @@ client = OpenAI(
     base_url="https://api.deepseek.com"
 )
 
-# 简化的系统提示词 - 双维度评分
-SYSTEM_PROMPT_TEMPLATE = (
+# 默认评分标准（当配置文件未提供时使用）
+DEFAULT_EVALUATION_FOCUS = {
+    "relevance_criteria": [
+        "Directly addresses core concepts of the target topic",
+        "Provides substantial new information or insights",
+        "Comes from credible sources (official releases, research papers, expert analysis)"
+    ],
+    "quality_indicators": [
+        "Includes concrete details, data, or evidence",
+        "Provides technical depth beyond surface-level reporting",
+        "Offers actionable insights or reproducible information",
+        "Clearly explains significance and implications"
+    ],
+    "reject_patterns": [
+        "Q&A/help-seeking posts or beginner troubleshooting",
+        "Opinion/rant without supporting data or evidence",
+        "Reposted content with no new information or analysis",
+        "Community discussion with no concrete updates or breakthroughs"
+    ]
+}
+
+# 基础 Prompt 模板（框架部分）
+BASE_PROMPT_TEMPLATE = (
     "You are a senior expert and professional bilingual translator. "
-    "Your task is to evaluate an article based on two dimensions:\n\n"
+    "Evaluate an article based on two dimensions:\n\n"
     "Target Topic: {topic}\n\n"
-    "### Hard Rejection Rules (must score 0 for both dimensions):\n"
-    "- Q&A/help-seeking posts, beginner troubleshooting, recruitment, personal showcase\n"
-    "- Opinion/rant without data, unverified rumors, repost/roundup with no new information\n"
-    "- Community discussion threads with no concrete updates or reproducible value\n\n"
-    "### Evaluation Dimensions:\n"
-    "1. **Relevance Score (0-10)**: How well does this article align with the Target Topic?\n"
-    "   - 10: Directly addresses core concepts of the topic\n"
-    "   - 7-9: Related to the topic with substantial overlap\n"
-    "   - 4-6: Tangentially related\n"
-    "   - 0-3: Unrelated or off-topic\n\n"
-    "2. **Quality Score (0-10)**: Overall content quality combining:\n"
-    "   - Information density: Does it provide substantial new information?\n"
-    "   - Source credibility: Official release > Primary analysis > Secondary report\n"
-    "   - Technical depth: Does it include technical details, data, or evidence?\n"
-    "   - Novelty: Does it present new developments (within 24 hours)?\n\n"
+    "{evaluation_focus}\n\n"
     "### Scoring Rules:\n"
     "- If relevance_score < {relevance_min} OR quality_score < {quality_min}, BOTH scores MUST be 0\n"
-    "- Prioritize official sources and first-party technical content\n"
-    "- For community sources: require concrete breakthroughs, not just discussion\n\n"
+    "- Use the evaluation focus above to guide your scoring\n\n"
+    "{output_format}"
+)
+
+# 将 SYSTEM_PROMPT_TEMPLATE 指向 BASE_PROMPT_TEMPLATE（保持兼容性）
+SYSTEM_PROMPT_TEMPLATE = BASE_PROMPT_TEMPLATE
+
+# 输出格式（固定部分，确保 JSON 解析稳定）
+OUTPUT_FORMAT = (
     "### Output format:\n"
     "You MUST output strictly in JSON format containing exactly the following fields:\n"
     "- 'relevance_score': (Integer, 0-10)\n"
@@ -59,6 +73,41 @@ SYSTEM_PROMPT_TEMPLATE = (
     "- 'bullet_points': (List of exactly 3 key points, each in format: '[English] / [中文]')\n"
     "- 'impact_analysis': (Impact analysis in format: '[English] / [中文]')"
 )
+
+
+def _build_evaluation_focus(focus_config: Dict[str, Any]) -> str:
+    """
+    从配置构建评分重点说明。
+    
+    如果配置为空或字段缺失，使用默认值。
+    """
+    # 使用配置值，如果不存在则使用默认值
+    relevance_criteria = focus_config.get("relevance_criteria") or DEFAULT_EVALUATION_FOCUS["relevance_criteria"]
+    quality_indicators = focus_config.get("quality_indicators") or DEFAULT_EVALUATION_FOCUS["quality_indicators"]
+    reject_patterns = focus_config.get("reject_patterns") or DEFAULT_EVALUATION_FOCUS["reject_patterns"]
+    
+    focus_text = ""
+    
+    # 拒绝规则
+    focus_text += "### Hard Rejection Rules (score 0 for both dimensions):\n"
+    for pattern in reject_patterns:
+        focus_text += f"- {pattern}\n"
+    
+    focus_text += "\n### Evaluation Dimensions:\n\n"
+    
+    # 相关性标准
+    focus_text += "**1. Relevance Score (0-10)**: How well does this align with the target topic?\n"
+    focus_text += "   Prioritize articles that:\n"
+    for criterion in relevance_criteria:
+        focus_text += f"   - {criterion}\n"
+    
+    # 质量指标
+    focus_text += "\n**2. Quality Score (0-10)**: Overall content quality.\n"
+    focus_text += "   High-quality articles typically:\n"
+    for indicator in quality_indicators:
+        focus_text += f"   - {indicator}\n"
+    
+    return focus_text
 
 
 def _looks_like_low_signal_discussion(title: str, source_url: str) -> bool:
@@ -89,6 +138,7 @@ def evaluate_article(
     source_url: str = "",
     relevance_min: int = 7,
     quality_min: int = 7,
+    evaluation_focus: Optional[Dict[str, Any]] = None,
 ) -> Optional[Dict[str, Any]]:
     """
     使用 DeepSeek API 评估文章价值，并提取结构化摘要。
@@ -99,6 +149,7 @@ def evaluate_article(
         topic: 频道关注的技术领域
         relevance_min: 相关性最低阈值
         quality_min: 质量最低阈值
+        evaluation_focus: 领域定制的评分标准（可选）
 
     返回:
         如果通过阈值且 JSON 解析成功，返回包含分析结果的字典；否则返回 None。
@@ -119,11 +170,15 @@ def evaluate_article(
         f"Summary: {summary[:1500]}"
     )
     
-    # 动态注入 topic 和阈值
+    # 构建评分标准文本
+    focus_text = _build_evaluation_focus(evaluation_focus or {})
+    
+    # 动态注入 topic、阈值和评分标准
     system_prompt = SYSTEM_PROMPT_TEMPLATE.format(
         topic=topic,
         relevance_min=relevance_min,
         quality_min=quality_min,
+        evaluation_focus=focus_text,
     )
 
     def _parse_json_with_fallback(raw: str) -> Dict[str, Any]:
