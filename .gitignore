@@ -1,20 +1,140 @@
-# 环境变量
+# ============================================================
+# 环境变量和敏感信息
+# ============================================================
 .env
+.env.local
+*.key
+*.pem
 
-# 文档
-docs/AI 自动化前沿资讯推送器项目需求文档.md
-
+# ============================================================
 # Python
+# ============================================================
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-*.egg-info/
-dist/
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
 venv/
 .venv/
+env/
+ENV/
+env.bak/
+venv.bak/
 
-#IDE
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.pytest_cache/
+.hypothesis/
+
+# ============================================================
+# IDE / Editors
+# ============================================================
+# Kiro
 .kiro/
 
-#测试脚本
-test/
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ============================================================
+# OS
+# ============================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ============================================================
+# 项目特定
+# ============================================================
+# 文档（如果不想提交某些内部文档）
+docs/AI 自动化前沿资讯推送器项目需求文档.md
+
+# 测试产生的临时文件
+tests/__pycache__/
+tests/*.pyc
+tests/.pytest_cache/
+tests/coverage/
+tests/*.log
+
+# 临时数据文件
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# 日志文件
+*.log
+logs/
+
+# 临时文件
+*.tmp
+*.temp
+*.bak
+*.swp

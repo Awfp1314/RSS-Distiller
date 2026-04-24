@@ -39,6 +39,9 @@ def _execute(sql: str, args: Optional[list] = None) -> dict:
     异常:
         如果 HTTP 状态码非 200 或 API 返回错误，则抛出 RuntimeError。
     """
+    if not TURSO_API_URL or not TURSO_AUTH_TOKEN:
+        raise RuntimeError("Turso 数据库配置缺失，请检查 TURSO_DATABASE_URL 和 TURSO_AUTH_TOKEN 环境变量")
+    
     # 构造 pipeline 请求体：一条 execute + 一条 close
     stmt = {"sql": sql}
     if args:

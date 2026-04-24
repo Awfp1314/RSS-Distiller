@@ -217,7 +217,12 @@ def evaluate_article(
             return None
 
         # 解析 JSON
-        result = _parse_json_with_fallback(raw_content)
+        try:
+            result = _parse_json_with_fallback(raw_content)
+        except json.JSONDecodeError as json_err:
+            print(f"  -> [错误] 模型未返回有效 JSON 格式: {title}")
+            print(f"原始输出: {raw_content[:200]}...")
+            return None
         
         # 提取简化后的两个维度
         relevance_score = int(result.get("relevance_score", 0) or 0)
@@ -233,10 +238,6 @@ def evaluate_article(
         print(f"  -> [保留] 发现高价值文章 (relevance={relevance_score}, quality={quality_score}): {title}")
         return result
 
-    except json.JSONDecodeError:
-        print(f"  -> [错误] 模型未返回有效 JSON 格式: {title}")
-        print(f"原始输出: {raw_content}")
-        return None
     except Exception as e:
         print(f"  -> [错误] DeepSeek API 请求失败: {e}")
         return None

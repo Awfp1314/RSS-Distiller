@@ -8,11 +8,11 @@
 - Python **3.10+** required (CI pins `3.10`).
 - Install deps: `pip install -r requirements.txt`
 - Run pipeline: `python main.py`
-- No `pytest`/`unittest` suite; module checks are inline in `test/` files, runnable via:
-  - `python test/test_rss_parser.py`
-  - `python test/test_db_manager.py`
-  - `python test/test_ai_processor.py`
-  - `python test/test_discord_pusher.py`
+- No `pytest`/`unittest` suite; module checks are inline in `tests/` files, runnable via:
+  - `python tests/test_rss_parser.py`
+  - `python tests/test_db_manager.py`
+  - `python tests/test_ai_processor.py`
+  - `python tests/test_discord_pusher.py`
 
 ## Testing/Execution Gotchas
 - Inline tests are **not** isolated unit tests; they call real external services (DeepSeek API, Turso DB, Discord webhook).

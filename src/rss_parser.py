@@ -136,10 +136,15 @@ def fetch_and_filter_rss(rss_urls: List[str], max_items_per_source: int = 30) ->
 
     参数:
         rss_urls: RSS 订阅源 URL 列表
+        max_items_per_source: 每个源最多保留的文章数
 
     返回:
         List[Dict]: 包含标题、链接、纯文本摘要、发布时间的文章字典列表
     """
+    if not rss_urls:
+        print("[警告] RSS URL 列表为空")
+        return []
+    
     filtered_articles: List[Dict[str, Any]] = []
     
     # 获取当前 UTC 时间
@@ -147,6 +152,10 @@ def fetch_and_filter_rss(rss_urls: List[str], max_items_per_source: int = 30) ->
     time_limit = timedelta(hours=24)
 
     for url in rss_urls:
+        if not url or not isinstance(url, str):
+            print(f"[警告] 跳过无效的 RSS URL: {url}")
+            continue
+            
         print(f"[RSS] 正在解析: {url}")
         source_articles: List[Dict[str, Any]] = []
         try:

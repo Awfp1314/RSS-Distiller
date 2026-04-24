@@ -28,6 +28,10 @@ def push_to_discord(article_data: Dict[str, Any], ai_result: Dict[str, Any], web
     if not webhook_url:
         print("  -> [错误] 未传入有效的 Webhook URL！")
         return False
+    
+    if not webhook_url.startswith("https://discord.com/api/webhooks/"):
+        print(f"  -> [错误] 无效的 Discord Webhook URL: {webhook_url[:50]}...")
+        return False
 
     title = article_data.get("title", "未知标题")
     link = article_data.get("link", "#")

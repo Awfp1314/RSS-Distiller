@@ -29,6 +29,10 @@ _DEFAULTS = {"max_items_per_source": 30, "max_push_per_run": 8}
 
 def _load_channels_config() -> dict:
     configs_dir = Path(__file__).parent / "configs"
+    if not configs_dir.exists():
+        print(f"[错误] 配置目录不存在: {configs_dir}")
+        return {}
+    
     result = {}
     for json_file in sorted(configs_dir.glob("*.json")):
         try:
@@ -38,6 +42,12 @@ def _load_channels_config() -> dict:
                 print(f"[警告] 跳过 {json_file.name}：缺少必填字段 {missing}")
                 continue
             channel_name = data["channel_name"]
+            
+            # 验证 rss_urls 是列表且不为空
+            if not isinstance(data.get("rss_urls"), list) or not data["rss_urls"]:
+                print(f"[警告] 跳过 {json_file.name}：rss_urls 必须是非空列表")
+                continue
+            
             result[channel_name] = {
                 "rss_urls": data["rss_urls"],
                 "webhook_env": data["webhook_env"],
@@ -46,9 +56,15 @@ def _load_channels_config() -> dict:
                 "max_push_per_run": data.get("max_push_per_run", _DEFAULTS["max_push_per_run"]),
                 "min_scores": data.get("min_scores", {}),
                 "evaluation_focus": data.get("evaluation_focus"),
+                "time_decay_gravity": data.get("time_decay_gravity", 0),
+                "time_decay_halflife": data.get("time_decay_halflife", 12),
             }
         except (json.JSONDecodeError, OSError) as e:
             print(f"[警告] 跳过 {json_file.name}：解析失败 ({e})")
+    
+    if not result:
+        print("[警告] 未加载到任何有效的频道配置")
+    
     return result
 
 CHANNELS_CONFIG = _load_channels_config()
@@ -59,8 +75,17 @@ def main():
     print("AI 自动化前沿资讯推送器 - 支持多频道路由版")
     print("=" * 50)
 
+    # 检查是否有有效配置
+    if not CHANNELS_CONFIG:
+        print("[错误] 没有加载到任何有效的频道配置，程序退出")
+        return
+
     # 1. 初始化数据库表（如果不存在）
-    init_db()
+    try:
+        init_db()
+    except Exception as e:
+        print(f"[错误] 数据库初始化失败: {e}")
+        return
 
     total_stats_new = 0
     total_stats_pushed = 0
