@@ -100,10 +100,10 @@ python main.py
 ### 4) 模块测试
 
 ```bash
-python test/test_rss_parser.py
-python test/test_db_manager.py
-python test/test_ai_processor.py
-python test/test_discord_pusher.py
+python tests/test_rss_parser.py
+python tests/test_db_manager.py
+python tests/test_ai_processor.py
+python tests/test_discord_pusher.py
 ```
 
 > 测试会调用真实外部服务（DeepSeek API、Turso 数据库、Discord Webhook），请在运行前确保 `.env` 已正确配置。
@@ -137,7 +137,7 @@ python test/test_discord_pusher.py
 
 使用 AI 配置生成器：
 
-1. 打开 [`CHANNEL_CONFIG_PROMPT.md`](CHANNEL_CONFIG_PROMPT.md)
+1. 打开 [`CHANNEL_CONFIG_PROMPT.md`](docs/CHANNEL_CONFIG_PROMPT.md)
 2. 复制提示词，发送给 ChatGPT/Claude/Kimi
 3. 回答 AI 的问题，描述你想要的频道
 4. 将生成的 JSON 配置发到我们的 [Discord 论坛](https://discord.gg/j556gmgY4) `#rss-suggestions` 频道

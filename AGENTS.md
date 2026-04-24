@@ -19,7 +19,8 @@
 - `src/ai_processor.py` test calls DeepSeek API (uses key/quota). The API call uses `response_format={"type": "json_object"}` with `temperature=0.3`. JSON repair fallback handles trailing commas: `re.sub(r",\s*([}\]])", r"\1", raw)`. Article summaries are truncated to 1500 chars before being sent to the API.
 - `src/db_manager.py` test writes to Turso then deletes a test row.
 - `src/discord_pusher.py` test falls back to `DISCORD_WEBHOOK_URL` if `DISCORD_WEBHOOK_AI` is not set (legacy var). Sends a real webhook message if either is configured. The message template wraps links in `<url>` angle brackets to suppress Discord link previews — preserve this when editing the template.
-- `src/rss_parser.py` disables SSL verification (`verify=False`) for RSS fetches. arXiv sources use stratified sampling (fresh/quality/explore layers), not simple top-N truncation. A Reddit early-filter (`_looks_like_low_signal_discussion`) drops Q&A/help posts before they reach the AI — this filter is Reddit-only (checks `source_url` for `reddit.com`).
+- `src/rss_parser.py` disables SSL verification (`verify=False`) for RSS fetches. arXiv sources use stratified sampling (fresh/quality/explore layers), not simple top-N truncation.
+- `src/ai_processor.py` has a Reddit early-filter (`_looks_like_low_signal_discussion`) that drops Q&A/help posts before they reach the AI — this filter is Reddit-only (checks `source_url` for `reddit.com`).
 
 ## Turso Integration Constraints
 - DB access is HTTP pipeline API only (`/v2/pipeline`) via `requests` in `src/db_manager.py`; do not introduce `sqlite3`/ORM code.

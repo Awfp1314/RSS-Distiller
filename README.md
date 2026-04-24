@@ -104,10 +104,10 @@ python main.py
 ### 4) Module tests
 
 ```bash
-python test/test_rss_parser.py
-python test/test_db_manager.py
-python test/test_ai_processor.py
-python test/test_discord_pusher.py
+python tests/test_rss_parser.py
+python tests/test_db_manager.py
+python tests/test_ai_processor.py
+python tests/test_discord_pusher.py
 ```
 
 > Tests call real external services (DeepSeek API, Turso DB, Discord webhook). Ensure your `.env` is configured before running them.
@@ -144,7 +144,7 @@ We are building a community-driven **hardcore tech intelligence project**. Contr
 
 Use our AI-powered configuration generator:
 
-1. Open [`CHANNEL_CONFIG_PROMPT.md`](CHANNEL_CONFIG_PROMPT.md)
+1. Open [`CHANNEL_CONFIG_PROMPT.md`](docs/CHANNEL_CONFIG_PROMPT.md)
 2. Copy the prompt and send it to ChatGPT/Claude/Kimi
 3. Answer the AI's questions about your desired channel
 4. Post the generated JSON config in our [Discord forum](https://discord.gg/j556gmgY4) `#rss-suggestions`
