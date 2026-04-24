@@ -140,14 +140,24 @@ Workflow files:
 
 We are building a community-driven **hardcore tech intelligence project**. Contributions are welcome:
 
-1. **Submit high-quality RSS sources**
-   - Add or edit JSON files in `configs/` (e.g., `configs/AI.json`) — each file represents a channel.
-2. **Add new channels**
-   - Create a new `configs/<channel>.json` file following the existing schema, add the corresponding webhook secret to GitHub Actions secrets, and you are done.
-3. **Improve the system prompt**
-   - Tune `SYSTEM_PROMPT_TEMPLATE` in `src/ai_processor.py` to improve relevance and summary quality.
-4. **Open Issues / PRs**
-   - Bug reports, feature requests, prompt experiments, and architecture improvements are all welcome.
+### 1. Suggest New Channels (Easiest Way)
+
+Use our AI-powered configuration generator:
+
+1. Open [`CHANNEL_CONFIG_PROMPT.md`](CHANNEL_CONFIG_PROMPT.md)
+2. Copy the prompt and send it to ChatGPT/Claude/Kimi
+3. Answer the AI's questions about your desired channel
+4. Post the generated JSON config in our [Discord forum](https://discord.gg/j556gmgY4) `#rss-suggestions`
+5. We'll review and add it within 24 hours!
+
+No coding required — just chat with AI and get a standard config.
+
+### 2. Direct Contribution (For Developers)
+
+- **Add/Edit RSS sources**: Modify JSON files in `configs/` (e.g., `configs/AI.json`)
+- **Create new channels**: Add a new `configs/<channel>.json` file following the existing schema
+- **Improve AI prompts**: Tune `SYSTEM_PROMPT_TEMPLATE` in `src/ai_processor.py`
+- **Open Issues/PRs**: Bug reports, feature requests, and architecture improvements are welcome
 
 ---
 

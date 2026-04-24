@@ -133,12 +133,24 @@ python test/test_discord_pusher.py
 
 欢迎加入"硬核技术情报共建计划"：
 
-1. 提交高质量 RSS 订阅源
-   - 在 `configs/` 目录下编辑或新增 JSON 文件（如 `configs/AI.json`），每个文件对应一个频道。
-2. 新增频道
-   - 创建新的 `configs/<频道名>.json` 文件（参考已有配置的结构），并在 GitHub Actions secrets 中添加对应的 webhook 即可。
-3. 优化 `src/ai_processor.py` 中的 `SYSTEM_PROMPT_TEMPLATE`
-4. 通过 Issue 或 PR 参与协作
+### 1. 推荐新频道（最简单）
+
+使用 AI 配置生成器：
+
+1. 打开 [`CHANNEL_CONFIG_PROMPT.md`](CHANNEL_CONFIG_PROMPT.md)
+2. 复制提示词，发送给 ChatGPT/Claude/Kimi
+3. 回答 AI 的问题，描述你想要的频道
+4. 将生成的 JSON 配置发到我们的 [Discord 论坛](https://discord.gg/j556gmgY4) `#rss-suggestions` 频道
+5. 我们会在 24 小时内审核并上线！
+
+无需编程 — 只需与 AI 对话，即可生成标准配置。
+
+### 2. 直接贡献（开发者）
+
+- **添加/编辑 RSS 源**：修改 `configs/` 目录下的 JSON 文件（如 `configs/AI.json`）
+- **创建新频道**：添加新的 `configs/<频道名>.json` 文件，参考现有配置结构
+- **优化 AI 提示词**：调整 `src/ai_processor.py` 中的 `SYSTEM_PROMPT_TEMPLATE`
+- **提交 Issue/PR**：欢迎 Bug 报告、功能建议和架构改进
 
 ---
 
